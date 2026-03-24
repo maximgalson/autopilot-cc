@@ -4,6 +4,8 @@
 
 Your brain doesn't hold context between sessions. Autopilot does.
 
+**Built by [Max Galson](https://galson.pro)** — AI automation architect, creator of [Content Factory](https://galson.pro/factory) and [Claude Code tools](https://galson.pro/blog).
+
 ## What It Does
 
 4 hooks that run silently inside Claude Code:
@@ -12,8 +14,10 @@ Your brain doesn't hold context between sessions. Autopilot does.
 |------|------|------|
 | **Dashboard** | Session start | Shows repos, tasks, focus, suggests next step |
 | **Statusline** | Always | Model + active task + context usage bar |
-| **Context Monitor** | After each tool | Warns when context is running low |
+| **Context Monitor** | After each tool | Periodic checkpoints + low-context warnings |
 | **Autosave** | Session end | Saves current work as suspended task |
+
+Plus a **memory layer** that captures every session, detects recurring topics, and surfaces relevant context automatically.
 
 ## ADHD Protocol (built-in)
 
@@ -26,34 +30,46 @@ Your brain doesn't hold context between sessions. Autopilot does.
 ## Install
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/maximgalson/autopilot-cc/main/install.sh)
-```
-
-Or manually:
-
-```bash
 git clone https://github.com/maximgalson/autopilot-cc.git /tmp/autopilot-cc
 cd /tmp/autopilot-cc && bash install.sh
+```
+
+## How It Works
+
+```
+You work normally in Claude Code
+        |
+Every 20 tool calls → silent checkpoint → Claude saves context
+        |
+Session ends → autosave captures summary + next step
+        |
+Next session → dashboard shows what you were doing
+        |
+Same topic 2+ times → "Create a task or one-off?"
+        |
+Topic switch detected → "Intentional or defocus?"
 ```
 
 ## Structure
 
 ```
 ~/.claude/autopilot/
-  config.json          # Your repos, keywords, routing, focus
-  VERSION              # Current version
-  ADHD-METHOD.md       # Full ADHD methodology reference
-  backlog/             # Tasks (1 JSON = 1 task)
-    task-{id}.json
-  hooks/               # 4 hooks
-    ap-dashboard.js    # SessionStart
-    ap-statusline.js   # StatusLine
-    ap-context-monitor.js  # PostToolUse
-    ap-autosave.js     # Stop
-  lib/                 # Shared logic
-    backlog.js         # Task CRUD, 3-char IDs
-    repos.js           # Git status across repos
-    format.js          # ADHD-friendly formatting
+  config.json            # Your repos, keywords, routing, focus
+  VERSION                # Current version
+  ADHD-METHOD.md         # Full ADHD methodology reference
+  backlog/               # Tasks (1 JSON = 1 task)
+  sessions/              # Daily session logs (auto-captured)
+  memory/                # Long-term memory (JSON + tags + search)
+  hooks/                 # 4 hooks
+    ap-dashboard.js      # SessionStart
+    ap-statusline.js     # StatusLine
+    ap-context-monitor.js  # PostToolUse (checkpoints + warnings)
+    ap-autosave.js       # Stop (session capture)
+  lib/                   # Shared logic
+    backlog.js           # Task CRUD, 3-char IDs
+    repos.js             # Git status across repos
+    format.js            # ADHD-friendly formatting
+    memory.js            # Memory layer: save, search, sessions
 ```
 
 ## Task Flow
@@ -68,25 +84,6 @@ pending → active → suspended → active → done
 - **active** — max 1 at a time
 - **suspended** — paused with context snapshot (auto on session end)
 - **done** — completed
-
-## Task Schema
-
-```json
-{
-  "id": "a7x",
-  "title": "Fix Prodamus webhook",
-  "project": "galsonpro-bot",
-  "status": "suspended",
-  "priority": "high",
-  "sessions_count": 2,
-  "context_snapshot": {
-    "cwd": "/Users/user/galsonpro-bot",
-    "files_touched": ["server.js"],
-    "summary": "Debugging HMAC verification",
-    "next_step": "Add express.raw() before line 897"
-  }
-}
-```
 
 ## Config
 
@@ -113,6 +110,20 @@ Edit `~/.claude/autopilot/config.json`:
 - Node.js 18+
 - Git repos you want to track
 
-## Version
+## Author
 
-1.0.0
+**Max Galson** — [galson.pro](https://galson.pro)
+
+Building AI-powered content systems and developer tools. Autopilot was born from managing 6 projects with ADHD — now it's the external brain I always needed.
+
+- Blog: [galson.pro/blog](https://galson.pro/blog)
+- Telegram: [@galsonpro](https://t.me/galsonpro)
+- GitHub: [@maximgalson](https://github.com/maximgalson)
+
+## License
+
+MIT
+
+---
+
+*Part of the [Galson Pro](https://galson.pro) ecosystem.*
