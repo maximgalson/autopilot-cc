@@ -53,11 +53,28 @@ process.stdin.on('end', () => {
     // No tasks in backlog message
     const noTasksMsg = allTasks.length === 0 ? '\nNo tasks in backlog. Ready for new work.\n' : '';
 
+    // Memory context — relevant memories for current state
+    const memoryLines = [];
+    try {
+      const memory = require('../lib/memory');
+      const active = backlog.getActive();
+      const relevant = memory.getRelevantContext(active, config);
+      if (relevant.length > 0) {
+        memoryLines.push('');
+        memoryLines.push('Memory (' + relevant.length + ' relevant):');
+        for (const m of relevant.slice(0, 3)) {
+          const proj = m.project ? ` [${m.project}]` : '';
+          memoryLines.push(`  ${m.summary}${proj}`);
+        }
+      }
+    } catch (e) {}
+
     const contextMessage = [
       'AUTOPILOT SESSION START',
       '========================',
       dashboard,
       ...focusLines,
+      ...memoryLines,
       noTasksMsg,
       'Routing:',
       ...routingLines,

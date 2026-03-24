@@ -3,3 +3,4 @@ backlog/*.json
 *.bak
 node_modules/
 .DS_Store
+memory/*.json

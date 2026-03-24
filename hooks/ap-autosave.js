@@ -45,6 +45,14 @@ process.stdin.on('end', () => {
       const sessions = (active.sessions_count || 0) + 1;
       backlog.updateTask(active.id, { sessions_count: sessions });
       backlog.suspendTask(active.id, snapshot);
+
+      // Auto-capture to memory if task has 3+ sessions
+      if (sessions >= 3) {
+        try {
+          const memory = require('../lib/memory');
+          memory.captureFromTask({ ...active, sessions_count: sessions, context_snapshot: snapshot });
+        } catch (e) {}
+      }
     } else if (workContext && workContext.summary) {
       // No active task but work was done — create suspended task from context
       const task = backlog.createTask({
