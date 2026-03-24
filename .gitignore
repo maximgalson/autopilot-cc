@@ -1,0 +1,5 @@
+config.json
+backlog/*.json
+*.bak
+node_modules/
+.DS_Store

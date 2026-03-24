@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "user": {
+    "name": "Your Name",
+    "language": "en"
+  },
+  "repos": {
+    "my-project": {
+      "path": "/Users/you/my-project",
+      "keywords": ["project", "main"],
+      "agents": [],
+      "skills": []
+    }
+  },
+  "global_agents": {},
+  "capture_triggers": ["todo", "don't forget", "later", "backlog"],
+  "focus": {
+    "current": null,
+    "why": null,
+    "roadmap": []
+  },
+  "notion_sync": {
+    "enabled": false,
+    "database_id": null
+  }
+}
