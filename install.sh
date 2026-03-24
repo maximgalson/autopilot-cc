@@ -145,7 +145,7 @@ if [ ! -f "$AUTOPILOT_DIR/config.json" ]; then
   },
   "repos": $REPOS_JSON,
   "global_agents": {},
-  "capture_triggers": ["todo", "don't forget", "later", "backlog"],
+  "capture_triggers": $([ "$LANG_PREF" == "ru" ] && echo '["todo", "потом надо", "не забыть", "позже сделать", "задача на потом", "в очередь"]' || echo '["todo", "don'\''t forget", "later", "backlog", "remind me"]'),
   "focus": {
     "current": null,
     "why": null,

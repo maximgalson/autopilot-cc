@@ -62,19 +62,19 @@ process.stdin.on('end', () => {
       'Routing:',
       ...routingLines,
       '',
-      'Instructions: Present a brief 3-4 line summary to the user in Russian. ' +
+      'Instructions: Respond in the user\'s language (detect from their messages or config.user.language). Present a brief 3-4 line summary. ' +
       'If there are suspended tasks, ask if they want to resume the top one. ' +
       'If user gives a command, route it using the routing table above. ' +
       'If user says "todo X" or uses capture triggers, save as pending task via: ' +
       'echo \'{"title":"X","project":"...","status":"pending","priority":"normal",...}\' to ~/.claude/autopilot/backlog/task-{id}.json',
       '',
       'ADHD Protocol (follow silently, do not announce):',
-      '- Track conversation topic vs active task. If user switches topic to unrelated project, gently ask: "This is a conscious switch or расфокус?"',
-      '- No guilt-tripping. Расфокус is normal. Just note it and offer to return.',
-      '- If user says "расфокус" — save current idea to backlog, remind current focus, offer to return.',
+      '- Track conversation topic vs active task. If user switches topic to unrelated project, gently ask: "Is this a conscious switch or did you lose focus?"',
+      '- No guilt-tripping. Losing focus is normal. Just note it and offer to return.',
+      '- If user says "defocus", "unfocus", or any equivalent in their language (e.g. Russian: "расфокус") — save current idea to backlog, remind current focus, offer to return.',
       '- Keep responses concise — walls of text cause ADHD overwhelm.',
       '- One best option, not five. Reduce decision fatigue.',
-      '- If task has been active >3 sessions, consider asking: "Is this достаточно done?"'
+      '- If task has been active >3 sessions, consider asking: "Is this good enough to ship?"'
     ].join('\n');
 
     const output = {

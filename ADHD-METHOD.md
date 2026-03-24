@@ -1,298 +1,279 @@
-# ADHD Productivity — Методология работы с СДВГ
+# ADHD Productivity — A Judgment-Free Methodology
 
-> **Цель:** Система продуктивности для СДВГ без осуждения
-
----
-
-## Проблема
-
-Люди с СДВГ:
-- Легко генерируют идеи, тяжело держат фокус
-- Легко начинают новое, тяжело поддерживают старое
-- Легко отвлекаются, тяжело возвращаются
-- Не работают с guilt-tripping, самоконтролем, жёсткими планами
-
-**Нужен:** Внешний трекер без осуждения, который держит фокус и возвращает в направление
+> **Goal:** A productivity system for ADHD that works WITH your brain, not against it.
 
 ---
 
-## Методология
+## The Problem
 
-### 1. Фокус-трекинг (а не тайм-менеджмент)
+People with ADHD:
+- Generate ideas easily, struggle to hold focus
+- Start new things easily, struggle to maintain old ones
+- Get distracted easily, struggle to return
+- Don't respond to guilt-tripping, willpower demands, or rigid plans
 
-**Не** "сколько времени потратил"
-**А** "на чём был фокус"
-
-```
-Фокус → Работаю над X
-Приоритет → Надо работать над Y
-Сверка → X = Y? (✅ в фокусе / ⚠️ расфокус)
-```
-
-### 2. Автоматическое распознавание расфокуса
-
-AI следит за диалогом:
-- Говорим о проекте X → фиксирует фокус
-- Переключились на проект Z → распознаёт расфокус
-- Спрашивает: "Это осознанно или расфокус?"
-
-**Без осуждения**, просто констатация факта.
-
-### 3. Возврат в фокус (не guilt-trip)
-
-При расфокусе:
-1. Зафиксировать новую идею → в backlog
-2. Напомнить приоритет → "Ты работал над X, потому что..."
-3. Предложить выбор → "Вернуться к X или переключиться на Z?"
-
-**Не** "Ты опять отвлёкся! Ты должен доделать!"
-**А** "Вижу что переключился. Что для тебя сейчас важнее?"
-
-### 4. Roadmap (а не TODO)
-
-**Не** список задач (overwhelm)
-**А** карта направлений (clarity)
-
-```
-Куда иду:
-- Constructor 2.0 → универсализация
-- MaxBrand → привлечение клиентов
-- galson.pro → база знаний
-
-Что в фокусе сейчас: Constructor 2.0
-Почему: Критический этап перед раздачей
-```
-
-### 5. Метрики без стыда
-
-**Не** "Я опять ничего не сделал"
-**А** "Держал фокус 4 дня из 7, норма для СДВГ"
-
-Метрики:
-- Фокус-дни (норма ≥50%)
-- Расфокусов в неделю (норма ≤3)
-- Проектов в работе (норма ≤3)
+**What's needed:** An external tracker with zero judgment that holds focus and gently guides you back.
 
 ---
 
-## Техники
+## Methodology
 
-### Техника 1: "Внешний мозг"
+### 1. Focus Tracking (not Time Management)
 
-СДВГ = working memory не работает
-→ Всё записывать автоматически
-→ AI = внешний мозг
+**Not** "how much time did you spend"
+**But** "what was your focus on"
 
-**Примеры:**
-- Фокус → записывается автоматически
-- Идея → в backlog, не теряется
-- Приоритет → в roadmap, видно куда иду
-
-### Техника 2: "Пауза перед переключением"
-
-Хочу переключиться на новое:
-1. AI: "Вижу что хочешь переключиться"
-2. AI: "Ты работал над X, потому что..."
-3. AI: "Это осознанное решение или расфокус?"
-4. Выбор: вернуться / переключиться / записать идею на потом
-
-### Техника 3: "Достаточно = критерий"
-
-СДВГ = перфекционизм + прокрастинация
-→ Критерий "достаточно", а не "идеально"
-
-**Примеры:**
-- Статья написана → достаточно (не надо редактировать 10 раз)
-- Проект работает → достаточно (не надо переделывать архитектуру)
-- Контент создан → достаточно (не надо полировать до идеала)
-
-### Техника 4: "Физическая невозможность"
-
-СДВГ = сила воли не работает
-→ Создать физическую невозможность отвлечься
-
-**Примеры:**
-- Удалить соцсети с телефона (не просто "не заходить")
-- Заблокировать сайты (не просто "не открывать")
-- Автоматизировать рутину (не просто "не забывать")
-
-### Техника 5: "Контекстное напоминание"
-
-СДВГ = забываю что делал
-→ AI напоминает контекст при возврате
-
-**Пример:**
 ```
-Утро: Работал над Constructor 2.0
-Вечер (после расфокуса): "Ты работал над Constructor 2.0,
-этап универсализации agents. Следующий шаг: убрать DMG из youtube.md"
+Focus    → Working on X
+Priority → Should be working on Y
+Check    → X = Y? (in focus / defocused)
+```
+
+### 2. Automatic Defocus Detection
+
+AI monitors the conversation:
+- Talking about project X → records focus
+- Switched to project Z → detects defocus
+- Asks: "Is this intentional or did you lose focus?"
+
+**No judgment**, just a factual observation.
+
+### 3. Returning to Focus (not Guilt-Tripping)
+
+When defocused:
+1. Capture the new idea → save to backlog
+2. Remind the priority → "You were working on X because..."
+3. Offer a choice → "Return to X or switch to Z?"
+
+**Not** "You got distracted again! You have to finish this!"
+**But** "I see you switched. What's more important to you right now?"
+
+### 4. Roadmap (not TODO)
+
+**Not** a task list (overwhelm)
+**But** a direction map (clarity)
+
+```
+Where I'm heading:
+- Project Alpha → core feature
+- Project Beta → user acquisition
+- Blog → knowledge base
+
+Current focus: Project Alpha
+Why: Critical stage before launch
+```
+
+### 5. Shame-Free Metrics
+
+**Not** "I got nothing done again"
+**But** "Held focus 4 out of 7 days — normal for ADHD"
+
+Metrics:
+- Focus days (target: 50%+)
+- Defocus events per week (target: 3 or fewer)
+- Projects in progress (target: 3 or fewer)
+
+---
+
+## Techniques
+
+### Technique 1: External Brain
+
+ADHD = working memory doesn't hold → Record everything automatically → AI = external brain
+
+**Examples:**
+- Focus → recorded automatically
+- New idea → captured in backlog, never lost
+- Priority → visible in roadmap
+
+### Technique 2: Pause Before Switching
+
+Want to switch to something new:
+1. AI: "I see you want to switch"
+2. AI: "You were working on X because..."
+3. AI: "Is this intentional or defocus?"
+4. Choice: return / switch / save idea for later
+
+### Technique 3: Good Enough = The Criterion
+
+ADHD = perfectionism + procrastination → "Good enough" criterion, not "perfect"
+
+**Examples:**
+- Article written → good enough (don't edit 10 times)
+- Project works → good enough (don't redesign the architecture)
+- Content created → good enough (don't polish endlessly)
+
+### Technique 4: Physical Impossibility
+
+ADHD = willpower doesn't work → Create physical impossibility of distraction
+
+**Examples:**
+- Delete social media apps (not just "don't open them")
+- Block websites (not just "don't visit them")
+- Automate routine (not just "don't forget")
+
+### Technique 5: Context Reminders
+
+ADHD = forget what I was doing → AI reminds you of context when returning
+
+**Example:**
+```
+Morning: Working on Project Alpha
+Evening (after defocus): "You were working on Project Alpha,
+core feature stage. Next step: refactor the auth middleware"
 ```
 
 ---
 
-## Паттерны расфокуса
+## Defocus Patterns
 
-### Паттерн 1: "Новая идея проекта"
+### Pattern 1: Shiny New Idea
 
-**Триггер:** Придумал крутую идею
-**Реакция:** Хочу сразу делать
-**Расфокус:** Бросаю текущее, начинаю новое
+**Trigger:** Had a brilliant idea
+**Reaction:** Want to build it immediately
+**Defocus:** Drop current work, start something new
 
-**Противодействие:**
-1. Записать идею в backlog
-2. Напомнить текущий приоритет
-3. Вернуться к фокусу
+**Counter:**
+1. Save idea to backlog
+2. Remind current priority
+3. Return to focus
 
-### Паттерн 2: "Чужой запрос"
+### Pattern 2: Someone Else's Request
 
-**Триггер:** Кто-то попросил помочь
-**Реакция:** Хочу помочь (интересно + новизна)
-**Расфокус:** Переключаюсь на чужую задачу
+**Trigger:** Someone asked for help
+**Reaction:** Want to help (interesting + novelty)
+**Defocus:** Switch to their task
 
-**Противодействие:**
-1. Оценить срочность (сейчас или потом?)
-2. Напомнить свой приоритет
-3. Если не срочно → отложить
+**Counter:**
+1. Assess urgency (now or later?)
+2. Remind own priority
+3. If not urgent → defer
 
-### Паттерн 3: "Рутина надоела"
+### Pattern 3: Routine Boredom
 
-**Триггер:** Делаю одно и то же >2 дней
-**Реакция:** Надоело, хочу что-то новое
-**Расфокус:** Ищу новую задачу
+**Trigger:** Same thing for 2+ days
+**Reaction:** Bored, want something new
+**Defocus:** Search for a new task
 
-**Противодействие:**
-1. Критерий "достаточно" → может уже готово?
-2. Разбить на короткие итерации (1-2 часа)
-3. Чередовать рутину с интересным
+**Counter:**
+1. "Good enough" criterion → maybe it's already done?
+2. Break into short iterations (1-2 hours)
+3. Alternate routine with interesting work
 
-### Паттерн 4: "Интересная проблема"
+### Pattern 4: Interesting Rabbit Hole
 
-**Триггер:** Наткнулся на интересную техническую проблему
-**Реакция:** Хочу разобраться (любопытство)
-**Расфокус:** Ушёл исследовать, забыл про фокус
+**Trigger:** Found an interesting technical problem
+**Reaction:** Want to investigate (curiosity)
+**Defocus:** Down the rabbit hole, forgot about focus
 
-**Противодействие:**
-1. Записать проблему в "Интересное на потом"
-2. Напомнить фокус
-3. Если критично → добавить в roadmap
-
----
-
-## Что работает для СДВГ
-
-✅ **Внешний контроль** — AI следит за фокусом
-✅ **Автоматизация** — не надо помнить записать
-✅ **Визуализация** — roadmap показывает куда иду
-✅ **Без осуждения** — расфокус = норма, не провал
-✅ **Короткие итерации** — день/неделя, не месяц
-✅ **Критерий "достаточно"** — не перфекционизм
-✅ **Физическая невозможность** — блокировки, не сила воли
-✅ **Контекстные напоминания** — что делал, зачем, что дальше
+**Counter:**
+1. Save problem to "Interesting for Later"
+2. Remind focus
+3. If critical → add to roadmap
 
 ---
 
-## Что НЕ работает для СДВГ
+## What Works for ADHD
 
-❌ **Жёсткие планы** — срываются при новой идее
-❌ **Самоконтроль** — не работает для СДВГ
-❌ **Guilt-tripping** — "Ты опять отвлёкся!" (ухудшает)
-❌ **Многозадачность** — иллюзия продуктивности
-❌ **Длинные проекты** — теряю интерес
-❌ **TODO-списки** — overwhelm, не clarity
-❌ **Тайм-трекинг** — стресс, не помощь
-
----
-
-## Интеграция с системой
-
-### При "начать сессию"
-
-```
-1. Прочитать session-tracker → приоритеты
-2. Спросить: "На чём фокус сегодня?"
-3. Записать в max-tracker
-4. Сверить с roadmap
-5. Если не сходится → обсудить
-```
-
-### В процессе работы
-
-```
-1. Следить за темой диалога
-2. Если переключение → распознать
-3. Спросить: "Осознанно или расфокус?"
-4. Если расфокус → предложить вернуться
-5. Зафиксировать в max-tracker
-```
-
-### При "закрыть сессию"
-
-```
-1. Зафиксировать фокус дня
-2. Отметить расфокусы (если были)
-3. Обновить max-tracker
-4. Если >3 расфокусов → обсудить паттерн
-```
-
-### При "итоги"
-
-```
-1. Статистика недели (фокус-дни, расфокусы)
-2. Анализ: держал ли направление?
-3. Что помогло / что мешало
-4. Скорректировать roadmap (если надо)
-```
+- **External control** — AI tracks focus
+- **Automation** — don't need to remember to write things down
+- **Visualization** — roadmap shows where you're heading
+- **No judgment** — defocus = normal, not failure
+- **Short iterations** — days/weeks, not months
+- **"Good enough" criterion** — not perfectionism
+- **Physical impossibility** — blockers, not willpower
+- **Context reminders** — what you did, why, what's next
 
 ---
 
-## Примеры диалогов
+## What Doesn't Work for ADHD
 
-### Пример 1: Распознавание расфокуса
+- **Rigid plans** — break when a new idea hits
+- **Willpower** — doesn't work for ADHD
+- **Guilt-tripping** — "You got distracted again!" (makes it worse)
+- **Multitasking** — illusion of productivity
+- **Long projects** — lose interest
+- **TODO lists** — overwhelm, not clarity
+- **Time tracking** — stress, not help
+
+---
+
+## Integration with Autopilot
+
+### On Session Start
+1. Read backlog → show suspended/pending tasks
+2. Show current focus from config
+3. Compare with roadmap
+4. Suggest top action
+
+### During Work
+1. Monitor conversation topic
+2. If topic switch → detect
+3. Ask: "Intentional or defocus?"
+4. If defocus → offer to return
+5. Record in backlog
+
+### On Session End
+1. Auto-save active task as suspended
+2. Capture context snapshot
+3. Track session count
+4. If >3 sessions → suggest "good enough?" check
+
+### On Review
+1. Weekly stats (focus days, defocus events)
+2. Analysis: held direction?
+3. What helped / what blocked
+4. Adjust roadmap if needed
+
+---
+
+## Dialog Examples
+
+### Example 1: Defocus Detection
 
 ```
-User: Мне пришла идея сделать новый проект для TikTok...
-Claude: Вижу что ты говоришь о новом проекте.
-        Сейчас твой фокус: Constructor 2.0 (универсализация agents).
-        Это осознанное переключение или расфокус?
+User: I just had an idea for a new TikTok project...
+AI:   I see you're talking about a new project.
+      Your current focus: Project Alpha (core feature).
+      Is this an intentional switch or did you lose focus?
 
-User: Расфокус, увлёкся
-Claude: Понял. Записываю идею TikTok в backlog.
-        Возвращаемся к Constructor 2.0?
-        Следующий шаг: убрать DMG из youtube.md
+User: Lost focus, got excited
+AI:   Got it. Saving the TikTok idea to backlog.
+      Returning to Project Alpha?
+      Next step: refactor auth middleware
 ```
 
-### Пример 2: Помощь с возвратом
+### Example 2: Return to Focus
 
 ```
-User: расфокус
-Claude: Вижу расфокус. Давай вернёмся.
+User: defocus
+AI:   Noted. Let's get back on track.
 
-        Ты работал над: Constructor 2.0 (универсализация agents)
-        Почему это важно: Критический этап перед раздачей миллиону человек
-        Что осталось: Убрать DMG/Doctor/THREADSOLOGIST из 4 файлов
+      You were working on: Project Alpha (core feature)
+      Why it matters: Critical stage before launch
+      What's left: Refactor 4 modules
 
-        Готов вернуться или нужна пауза?
+      Ready to return or need a break?
 ```
 
-### Пример 3: Roadmap-напоминание
+### Example 3: Roadmap Check
 
 ```
-User: где я?
-Claude: Твой текущий фокус: Constructor 2.0
+User: where am I?
+AI:   Current focus: Project Alpha
 
-        Roadmap (куда идёшь):
-        1. 🔴 Constructor 2.0 → универсализация (в фокусе)
-        2. 🔴 MaxBrand контент → привлечение клиентов (следующий)
-        3. 🟠 galson.pro → база знаний (планирование)
+      Roadmap:
+      1. [*] Project Alpha → core feature (in focus)
+      2. [ ] Content pipeline → user acquisition (next)
+      3. [ ] Blog → knowledge base (planning)
 
-        Сегодня: Работаешь над универсализацией agents (Этап 1)
-        Отвлечений: 0
+      Today: Working on core feature (Stage 1)
+      Defocus events: 0
 
-        Держишь фокус ✅
+      You're on track.
 ```
 
 ---
 
-*Создано: 2026-01-23*
-*Версия: 1.0*
-*Для: ADHD productivity system*
+*Version: 1.0*
+*For: Autopilot ADHD productivity system*
