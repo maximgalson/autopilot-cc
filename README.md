@@ -1,5 +1,7 @@
 # Autopilot — ADHD Terminal Copilot for Claude Code
 
+![autopilot-cc-banner-v4](https://github.com/user-attachments/assets/ee825c39-0b4f-446c-bbd4-00bb3ad60a40)
+
 Your brain doesn't hold context between sessions. Autopilot does.
 
 ## What It Does
