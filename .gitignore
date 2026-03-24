@@ -4,3 +4,4 @@ backlog/*.json
 node_modules/
 .DS_Store
 memory/*.json
+sessions/*.json

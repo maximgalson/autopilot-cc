@@ -67,6 +67,18 @@ process.stdin.on('end', () => {
           memoryLines.push(`  ${m.summary}${proj}`);
         }
       }
+
+      // Recent sessions — show what was worked on
+      const recent = memory.getRecentSessions(3);
+      if (recent.length > 0) {
+        memoryLines.push('');
+        memoryLines.push('Recent sessions (' + recent.length + '):');
+        for (const s of recent.slice(0, 3)) {
+          const proj = s.project ? ` [${s.project}]` : '';
+          const recurring = s._recurring ? ' [RECURRING]' : '';
+          memoryLines.push(`  ${s.summary}${proj}${recurring}`);
+        }
+      }
     } catch (e) {}
 
     const contextMessage = [
@@ -91,7 +103,9 @@ process.stdin.on('end', () => {
       '- If user says "defocus", "unfocus", or any equivalent in their language (e.g. Russian: "расфокус") — save current idea to backlog, remind current focus, offer to return.',
       '- Keep responses concise — walls of text cause ADHD overwhelm.',
       '- One best option, not five. Reduce decision fatigue.',
-      '- If task has been active >3 sessions, consider asking: "Is this good enough to ship?"'
+      '- If task has been active >3 sessions, consider asking: "Is this good enough to ship?"',
+      '- When session ends, save work context to bridge file: echo \'{"summary":"what was done","next_step":"what to do next","files_touched":["file1.js"]}\' > $TMPDIR/autopilot-work-$SESSION_ID.json',
+      '- If a session topic appears as [RECURRING] in recent sessions, ask the user: "This topic keeps coming up. Should I create a dedicated task for it, or is this a one-off?"'
     ].join('\n');
 
     const output = {

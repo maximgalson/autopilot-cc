@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Autopilot Autosave v1.0.0
-// Stop hook — auto-saves active task as suspended with context snapshot
+// Autopilot Autosave v2.0.0
+// Stop hook — captures every session, promotes recurring ones to long-term memory
 
 const fs = require('fs');
 const os = require('os');
@@ -19,6 +19,7 @@ process.stdin.on('end', () => {
     const tmpDir = os.tmpdir();
 
     const backlog = require('../lib/backlog');
+    const memory = require('../lib/memory');
 
     // Read bridge file with work context (written by Claude during session)
     let workContext = null;
@@ -41,32 +42,41 @@ process.stdin.on('end', () => {
         snapshot.files_touched = workContext.files_touched || snapshot.files_touched;
       }
       snapshot.cwd = cwd;
-      // Track session count for "достаточно" criterion
       const sessions = (active.sessions_count || 0) + 1;
       backlog.updateTask(active.id, { sessions_count: sessions });
       backlog.suspendTask(active.id, snapshot);
 
-      // Auto-capture to memory if task has 3+ sessions
+      // Auto-capture to long-term memory if recurring (3+ sessions)
       if (sessions >= 3) {
         try {
-          const memory = require('../lib/memory');
           memory.captureFromTask({ ...active, sessions_count: sessions, context_snapshot: snapshot });
         } catch (e) {}
       }
     } else if (workContext && workContext.summary) {
-      // No active task but work was done — create suspended task from context
+      // No active task but work was done — always capture as session log
+      const project = detectProject(cwd);
+      const snapshot = {
+        cwd,
+        summary: workContext.summary,
+        next_step: workContext.next_step || '',
+        files_touched: workContext.files_touched || []
+      };
+
+      // Save to session log (lightweight, always)
+      memory.saveSession({
+        summary: workContext.summary,
+        project,
+        details: snapshot,
+        session_id: sessionId
+      });
+
+      // Also create suspended task so dashboard picks it up
       const task = backlog.createTask({
         title: workContext.summary.slice(0, 80),
-        project: detectProject(cwd),
+        project,
         source: 'auto',
-        context_snapshot: {
-          cwd,
-          summary: workContext.summary,
-          next_step: workContext.next_step || '',
-          files_touched: workContext.files_touched || []
-        }
+        context_snapshot: snapshot
       });
-      // Set to suspended immediately
       if (task) backlog.updateTask(task.id, { status: 'suspended' });
     }
 
