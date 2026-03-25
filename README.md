@@ -4,7 +4,7 @@
 
 Your brain doesn't hold context between sessions. Autopilot does.
 
-**Built by [Max Galson](https://galson.pro)** — AI automation architect, creator of [Content Factory](https://galson.pro/factory) and [Claude Code tools](https://galson.pro/blog).
+**Built by [Max Galson](https://galson.pro)** — AI automation architect, creator of [Content Factory](https://galson.pro) and [Claude Code tools](https://galson.pro/blog).
 
 ## What It Does
 
@@ -133,7 +133,7 @@ Optional: connect to Notion for a human-friendly task board (see config).
 Building AI-powered content systems and developer tools. Autopilot was born from managing 6 projects with ADHD — now it's the external brain I always needed.
 
 - Blog: [galson.pro/blog](https://galson.pro/blog)
-- Telegram: [@galsonpro](https://t.me/galsonpro)
+- Telegram: [@galsonpro](https://t.me/galsonproai)
 - GitHub: [@maximgalson](https://github.com/maximgalson)
 
 ## License
