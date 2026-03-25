@@ -41,12 +41,20 @@ process.stdin.on('end', () => {
       routingLines.push(`  ${name}: [${kw}] -> ${targets.join(', ') || 'direct'}`);
     }
 
-    // Focus block from config
+    // Focus block — only show as context, never impose on current work
     const focusLines = [];
     if (config.focus?.current) {
-      focusLines.push('Focus: ' + config.focus.current + (config.focus.why ? ' (' + config.focus.why + ')' : ''));
-      if (config.focus.roadmap?.length) {
-        focusLines.push('Roadmap: ' + config.focus.roadmap.map((r, i) => i === 0 ? '[*] ' + r : '[ ] ' + r).join(' -> '));
+      // Detect current project from cwd
+      const cwd = data.cwd || process.cwd();
+      let currentProject = null;
+      for (const [name, repo] of Object.entries(config.repos || {})) {
+        if (cwd.startsWith(repo.path)) { currentProject = name; break; }
+      }
+
+      // Show focus as FYI, not as directive
+      focusLines.push('Global focus (FYI): ' + config.focus.current + (config.focus.why ? ' (' + config.focus.why + ')' : ''));
+      if (currentProject) {
+        focusLines.push('Current project (from cwd): ' + currentProject);
       }
     }
 
@@ -98,7 +106,8 @@ process.stdin.on('end', () => {
       'echo \'{"title":"X","project":"...","status":"pending","priority":"normal",...}\' to ~/.claude/autopilot/backlog/task-{id}.json',
       '',
       'ADHD Protocol (follow silently, do not announce):',
-      '- Track conversation topic vs active task. If user switches topic to unrelated project, gently ask: "Is this a conscious switch or did you lose focus?"',
+      '- IMPORTANT: "Global focus" is just context, NOT a directive. The user decides what to work on. Do NOT push them back to global focus if they are clearly working on something else.',
+      '- Only ask about defocus if the user switches topics MID-SESSION (not at session start). Starting a session on any project is intentional by definition.',
       '- No guilt-tripping. Losing focus is normal. Just note it and offer to return.',
       '- If user says "defocus", "unfocus", or any equivalent in their language (e.g. Russian: "расфокус") — save current idea to backlog, remind current focus, offer to return.',
       '- Keep responses concise — walls of text cause ADHD overwhelm.',
