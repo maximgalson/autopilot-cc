@@ -89,6 +89,21 @@ info "Copying lib..."
 cp "$SOURCE_DIR/lib/backlog.js" "$AUTOPILOT_DIR/lib/"
 cp "$SOURCE_DIR/lib/repos.js" "$AUTOPILOT_DIR/lib/"
 cp "$SOURCE_DIR/lib/format.js" "$AUTOPILOT_DIR/lib/"
+cp "$SOURCE_DIR/lib/memory.js" "$AUTOPILOT_DIR/lib/"
+
+info "Copying skills..."
+if [ -d "$SOURCE_DIR/skills" ]; then
+  # Install skills to Claude Code's skill directory
+  CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+  if [ -d "$CLAUDE_SKILLS_DIR" ]; then
+    cp -r "$SOURCE_DIR/skills/"* "$CLAUDE_SKILLS_DIR/" 2>/dev/null || true
+    ok "Skills installed to $CLAUDE_SKILLS_DIR"
+  else
+    # Fallback: copy to autopilot dir
+    mkdir -p "$AUTOPILOT_DIR/skills"
+    cp -r "$SOURCE_DIR/skills/"* "$AUTOPILOT_DIR/skills/" 2>/dev/null || true
+  fi
+fi
 
 info "Copying docs..."
 cp "$SOURCE_DIR/README.md" "$AUTOPILOT_DIR/" 2>/dev/null || true

@@ -70,6 +70,8 @@ Topic switch detected → "Intentional or defocus?"
     repos.js             # Git status across repos
     format.js            # ADHD-friendly formatting
     memory.js            # Memory layer: save, search, sessions
+  skills/                # Slash commands
+    todo/SKILL.md        # /todo — create task with context
 ```
 
 ## Task Flow
@@ -94,11 +96,25 @@ Edit `~/.claude/autopilot/config.json`:
 - `capture_triggers` — phrases that auto-create tasks ("todo X", "don't forget X")
 - `global_agents` — cross-project agents with keyword routing
 
+## /todo — Task Creation
+
+Slash command that creates a task as a markdown file with full context:
+
+```
+/todo Fix the webhook verification
+/todo [high] Deploy new version
+/todo [my-project] Refactor auth
+```
+
+Creates `~/.claude/autopilot/tasks/fix-the-webhook.md` with context, next step, and work log. When you return to this task later, Claude reads the file and picks up where you left off.
+
+Optional: connect to Notion for a human-friendly task board (see config).
+
 ## Commands (natural language)
 
 | Say | What happens |
 |-----|-------------|
-| `todo fix the webhook` | Creates pending task |
+| `/todo fix the webhook` | Creates MD task file + backlog entry |
 | `continue #a7x` | Activates suspended task |
 | `done #a7x` | Completes task |
 | `defocus` / `unfocus` | Saves idea to backlog, returns to focus |
