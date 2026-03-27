@@ -71,6 +71,8 @@ Topic switch detected → "Intentional or defocus?"
     format.js            # ADHD-friendly formatting
     memory.js            # Memory layer: save, search, sessions
   skills/                # Slash commands
+    save/SKILL.md        # /save — save session snapshot
+    back/SKILL.md        # /back — return to saved session
     todo/SKILL.md        # /todo — create task with context
 ```
 
@@ -96,6 +98,39 @@ Edit `~/.claude/autopilot/config.json`:
 - `capture_triggers` — phrases that auto-create tasks ("todo X", "don't forget X")
 - `global_agents` — cross-project agents with keyword routing
 
+## /save + /back — Session Memory
+
+Your brain forgets what you were doing. Sessions remember.
+
+```
+Working on dashboard fixes...
+> /save dashboard          # saves 8-line snapshot
+# close terminal, go to sleep
+
+Next day:
+> /back                    # shows all sessions
+> /back dashboard          # jumps straight back
+```
+
+**`/save`** captures what you did, what's next, and any blockers — max 8 lines. Overwrites every time (no bloat).
+
+**`/back`** shows a table of all sessions. Pick one and continue where you left off.
+
+Sessions live in `~/.claude/autopilot/sessions/` — visible from any project.
+
+**How it's different from `claude --resume`:**
+
+| | `claude --resume` | `/save` + `/back` |
+|---|---|---|
+| Saves | Entire chat (all messages) | 8-line snapshot (essence + next step) |
+| Sessions | Last one only | Any number, named |
+| Context cost | Heavy — full conversation | Minimal — 8 lines |
+| Cross-project | No | Yes |
+
+`claude --resume` restores the **chat**. `/back` restores the **meaning** — what you did, what's next, where you stopped.
+
+Optional: sync sessions to Notion (set `notion_sync.enabled: true` in config).
+
 ## /todo — Task Creation
 
 Slash command that creates a task as a markdown file with full context:
@@ -114,6 +149,9 @@ Optional: connect to Notion for a human-friendly task board (see config).
 
 | Say | What happens |
 |-----|-------------|
+| `/save dashboard` | Saves session snapshot |
+| `/back` | Shows all sessions, pick one |
+| `/back dashboard` | Returns to specific session |
 | `/todo fix the webhook` | Creates MD task file + backlog entry |
 | `continue #a7x` | Activates suspended task |
 | `done #a7x` | Completes task |
