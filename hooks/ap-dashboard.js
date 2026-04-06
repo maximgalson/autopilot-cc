@@ -113,7 +113,7 @@ process.stdin.on('end', () => {
       '- Keep responses concise — walls of text cause ADHD overwhelm.',
       '- One best option, not five. Reduce decision fatigue.',
       '- If task has been active >3 sessions, consider asking: "Is this good enough to ship?"',
-      '- When session ends, save work context to bridge file: echo \'{"summary":"what was done","next_step":"what to do next","files_touched":["file1.js"]}\' > $TMPDIR/autopilot-work-$SESSION_ID.json',
+      '- Session context is auto-captured by hooks. Optionally write a high-quality summary to $TMPDIR/autopilot-work-$SESSION_ID.json if checkpoint asks.',
       '- If a session topic appears as [RECURRING] in recent sessions, ask the user: "This topic keeps coming up. Should I create a dedicated task for it, or is this a one-off?"'
     ].join('\n');
 

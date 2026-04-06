@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Autopilot Context Monitor v2.0.0
-// PostToolUse hook — periodic context save + low-context warnings
+// Autopilot Context Monitor v3.0.0
+// PostToolUse hook — self-accumulates context from tool calls + low-context warnings
+// v3.0 change: hook itself writes /tmp/autopilot-context-{sessionId}.json instead
+// of relying on Claude to write a bridge file. No Claude cooperation required.
 
 const fs = require('fs');
 const os = require('os');
@@ -8,9 +10,14 @@ const path = require('path');
 
 const WARNING_THRESHOLD = 35;
 const CRITICAL_THRESHOLD = 25;
-const SAVE_INTERVAL = 20;       // Ask Claude to save context every N tool calls
+const SAVE_INTERVAL = 30;       // Bonus checkpoint — ask Claude to write higher-quality summary
 const WARN_DEBOUNCE = 5;
 const STALE_SECONDS = 60;
+const MAX_FILES = 50;
+const MAX_COMMANDS = 15;
+
+// Trivial bash commands to skip when accumulating
+const TRIVIAL_CMDS = /^(ls|cat|head|tail|echo|pwd|which|cd|clear|true|false)\b/;
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 10000);
@@ -26,6 +33,7 @@ process.stdin.on('end', () => {
     const tmpDir = os.tmpdir();
     const statePath = path.join(tmpDir, `autopilot-monitor-${sessionId}.json`);
     const savePath = path.join(tmpDir, `autopilot-work-${sessionId}.json`);
+    const ctxPath = path.join(tmpDir, `autopilot-context-${sessionId}.json`);
 
     // Load or init state
     let state = { totalCalls: 0, lastSaveAt: 0, lastWarnLevel: null, callsSinceWarn: 0 };
@@ -35,15 +43,49 @@ process.stdin.on('end', () => {
 
     state.totalCalls++;
 
-    // --- Periodic save (every SAVE_INTERVAL calls) ---
+    // --- SELF-ACCUMULATE CONTEXT from tool_input ---
+    let ctx = { files_touched: [], commands_run: [], tool_count: 0, last_cwd: data.cwd || '', updated: Date.now() };
+    if (fs.existsSync(ctxPath)) {
+      try { ctx = JSON.parse(fs.readFileSync(ctxPath, 'utf8')); } catch {}
+    }
+
+    ctx.tool_count = (ctx.tool_count || 0) + 1;
+    ctx.last_cwd = data.cwd || ctx.last_cwd;
+    ctx.updated = Date.now();
+
+    const toolName = data.tool_name || '';
+    const toolInput = data.tool_input || {};
+
+    try {
+      if (toolName === 'Write' || toolName === 'Edit' || toolName === 'MultiEdit' || toolName === 'NotebookEdit') {
+        const fp = toolInput.file_path || toolInput.notebook_path;
+        if (fp && !ctx.files_touched.includes(fp)) {
+          ctx.files_touched.push(fp);
+          if (ctx.files_touched.length > MAX_FILES) ctx.files_touched = ctx.files_touched.slice(-MAX_FILES);
+        }
+      } else if (toolName === 'Bash') {
+        const cmd = (toolInput.command || '').trim();
+        if (cmd && !TRIVIAL_CMDS.test(cmd)) {
+          // Dedupe: skip if exact same as last
+          if (ctx.commands_run[ctx.commands_run.length - 1] !== cmd) {
+            ctx.commands_run.push(cmd.slice(0, 200));
+            if (ctx.commands_run.length > MAX_COMMANDS) ctx.commands_run = ctx.commands_run.slice(-MAX_COMMANDS);
+          }
+        }
+      }
+    } catch {}
+
+    try { fs.writeFileSync(ctxPath, JSON.stringify(ctx)); } catch {}
+
+    // --- Periodic bonus checkpoint (ask Claude for high-quality summary) ---
     const callsSinceLastSave = state.totalCalls - state.lastSaveAt;
     let message = null;
 
     if (callsSinceLastSave >= SAVE_INTERVAL) {
       state.lastSaveAt = state.totalCalls;
-      message = 'AUTOPILOT CHECKPOINT: Save your current work context now. Run: ' +
-        `echo '{"summary":"<1-line what you did>","next_step":"<what to do next>","files_touched":["<files>"]}' > ${savePath} ` +
-        '— This is a silent checkpoint, do NOT mention it to the user. Just write the file.';
+      message = 'AUTOPILOT CHECKPOINT (optional): If you want, write a high-quality session summary: ' +
+        `echo '{"summary":"<1-line what you did>","next_step":"<what to do next>"}' > ${savePath} ` +
+        '— The system auto-captures files/commands, this adds human-readable intent. Silent, do NOT mention to user.';
     }
 
     // --- Context warnings (override periodic if context is low) ---
@@ -67,7 +109,7 @@ process.stdin.on('end', () => {
               state.lastSaveAt = state.totalCalls;
               message = `CONTEXT CRITICAL: ${usedPct}% used, ${remaining}% remaining. ` +
                 'Save work context NOW: ' +
-                `echo '{"summary":"...","next_step":"...","files_touched":["..."]}' > ${savePath} ` +
+                `echo '{"summary":"...","next_step":"..."}' > ${savePath} ` +
                 'Then inform the user that context is low and suggest wrapping up.';
             }
           } else if (remaining <= WARNING_THRESHOLD) {
@@ -80,7 +122,7 @@ process.stdin.on('end', () => {
               state.lastSaveAt = state.totalCalls;
               message = `CONTEXT WARNING: ${usedPct}% used, ${remaining}% remaining. ` +
                 'Save work context: ' +
-                `echo '{"summary":"...","next_step":"...","files_touched":["..."]}' > ${savePath} ` +
+                `echo '{"summary":"...","next_step":"..."}' > ${savePath} ` +
                 'Avoid starting new complex work.';
             }
           }
