@@ -186,8 +186,25 @@ function buildAutoSummary(acc, files, gitSummary) {
 function detectProject(cwd) {
   try {
     const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config.json'), 'utf8'));
-    for (const [name, repo] of Object.entries(config.repos || {})) {
-      if (cwd.startsWith(repo.path)) return name;
+    const repos = config.repos || {};
+
+    // 1. Try path match (fast, host-specific)
+    for (const [name, repo] of Object.entries(repos)) {
+      if (repo.path && cwd.startsWith(repo.path)) return name;
+    }
+
+    // 2. Try git remote match (works on any host/clone)
+    let remote = '';
+    try {
+      remote = execSync('git remote get-url origin 2>/dev/null', {
+        cwd, timeout: 2000, encoding: 'utf8'
+      }).trim().toLowerCase();
+    } catch {}
+
+    if (remote) {
+      for (const [name, repo] of Object.entries(repos)) {
+        if (repo.remote && remote.includes(repo.remote.toLowerCase())) return name;
+      }
     }
   } catch {}
   return null;

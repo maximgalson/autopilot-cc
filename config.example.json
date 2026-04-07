@@ -7,6 +7,7 @@
   "repos": {
     "my-project": {
       "path": "/Users/you/my-project",
+      "remote": "yourname/my-project",
       "keywords": ["project", "main"],
       "agents": [],
       "skills": []
