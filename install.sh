@@ -6,7 +6,7 @@ set -euo pipefail
 
 AUTOPILOT_DIR="$HOME/.claude/autopilot"
 SETTINGS_FILE="$HOME/.claude/settings.json"
-VERSION="1.0.0"
+VERSION="1.2.0"
 
 # Colors
 RED='\033[0;31m'
