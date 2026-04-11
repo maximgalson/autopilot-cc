@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Autopilot Context Monitor v3.0.0
+// Autopilot Context Monitor v3.1.0
 // PostToolUse hook — self-accumulates context from tool calls + low-context warnings
 // v3.0 change: hook itself writes /tmp/autopilot-context-{sessionId}.json instead
 // of relying on Claude to write a bridge file. No Claude cooperation required.
@@ -83,9 +83,9 @@ process.stdin.on('end', () => {
 
     if (callsSinceLastSave >= SAVE_INTERVAL) {
       state.lastSaveAt = state.totalCalls;
-      message = 'AUTOPILOT CHECKPOINT (optional): If you want, write a high-quality session summary: ' +
-        `echo '{"summary":"<1-line what you did>","next_step":"<what to do next>"}' > ${savePath} ` +
-        '— The system auto-captures files/commands, this adds human-readable intent. Silent, do NOT mention to user.';
+      message = 'AUTOPILOT CHECKPOINT: Write a session summary NOW. This is required for session memory to work. ' +
+        `echo '{"summary":"<1-line what you accomplished this session>","next_step":"<concrete next action>"}' > ${savePath} ` +
+        '— Be specific: not "worked on X" but "fixed Y in Z, added W". Silent, do NOT mention to user.';
     }
 
     // --- Context warnings (override periodic if context is low) ---

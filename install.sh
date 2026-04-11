@@ -6,7 +6,7 @@ set -euo pipefail
 
 AUTOPILOT_DIR="$HOME/.claude/autopilot"
 SETTINGS_FILE="$HOME/.claude/settings.json"
-VERSION="1.2.0"
+VERSION="1.3.0"
 
 # Colors
 RED='\033[0;31m'
@@ -105,9 +105,11 @@ if [ -d "$SOURCE_DIR/skills" ]; then
   fi
 fi
 
-info "Copying docs..."
+info "Copying docs and updater..."
 cp "$SOURCE_DIR/README.md" "$AUTOPILOT_DIR/" 2>/dev/null || true
 cp "$SOURCE_DIR/ADHD-METHOD.md" "$AUTOPILOT_DIR/" 2>/dev/null || true
+cp "$SOURCE_DIR/update.sh" "$AUTOPILOT_DIR/" 2>/dev/null || true
+chmod +x "$AUTOPILOT_DIR/update.sh" 2>/dev/null || true
 
 echo "$VERSION" > "$AUTOPILOT_DIR/VERSION"
 

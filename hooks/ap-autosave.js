@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Autopilot Autosave v5.1.0
+// Autopilot Autosave v5.2.0
 // Stop hook — reads self-accumulated context + optional Claude bridge + git diff
 // v5.0: NO auto-task creation. Sessions go to log only.
 //   Tasks are created ONLY explicitly via /todo or user request.
@@ -40,12 +40,18 @@ process.stdin.on('end', () => {
       try { workContext = JSON.parse(fs.readFileSync(workPath, 'utf8')); } catch {}
     }
 
-    // --- Bonus source: git diff ---
+    // --- Bonus source: git diff (only if small, skip large uncommitted repos) ---
     let gitSummary = '';
     try {
-      gitSummary = execSync('git diff --stat HEAD 2>/dev/null | tail -1', {
+      const diffCount = execSync('git diff --stat HEAD 2>/dev/null | wc -l', {
         cwd, timeout: 3000, encoding: 'utf8'
       }).trim();
+      // Only include git summary if < 20 files changed (skip large uncommitted repos)
+      if (parseInt(diffCount) > 0 && parseInt(diffCount) <= 20) {
+        gitSummary = execSync('git diff --stat HEAD 2>/dev/null | tail -1', {
+          cwd, timeout: 3000, encoding: 'utf8'
+        }).trim();
+      }
     } catch {}
 
     // If truly nothing happened, bail

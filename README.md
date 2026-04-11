@@ -34,6 +34,16 @@ git clone https://github.com/maximgalson/autopilot-cc.git /tmp/autopilot-cc
 cd /tmp/autopilot-cc && bash install.sh
 ```
 
+## Update
+
+```bash
+bash ~/.claude/autopilot/update.sh
+```
+
+Or from within Claude Code, type `/update`.
+
+Updates preserve your `config.json` and task backlog.
+
 ## How It Works
 
 ```
