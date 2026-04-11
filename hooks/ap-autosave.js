@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Autopilot Autosave v4.1.0
+// Autopilot Autosave v5.1.0
 // Stop hook — reads self-accumulated context + optional Claude bridge + git diff
-// v4.0 change: no longer depends on Claude writing the bridge file.
+// v5.0: NO auto-task creation. Sessions go to log only.
+//   Tasks are created ONLY explicitly via /todo or user request.
+// v5.1: Memory v2 — capture memories from any substantial session, not just 3+.
 // Primary source: /tmp/autopilot-context-{sessionId}.json (written by PostToolUse hook)
 
 const fs = require('fs');
@@ -104,7 +106,7 @@ process.stdin.on('end', () => {
     }
 
     // Always log to sessions
-    const sessionEntry = memory.saveSession({ summary, project, details: snapshot, session_id: sessionId });
+    memory.saveSession({ summary, project, details: snapshot, session_id: sessionId });
 
     // Auto-capture memory from substantial sessions (even without active task)
     if (files.length >= 2 || (summary && summary.length > 30 && !summary.startsWith('Session'))) {
@@ -123,34 +125,9 @@ process.stdin.on('end', () => {
       return;
     }
 
-    // --- Case 3: Recurring topic → create task ---
-    if (sessionEntry?._recurring) {
-      backlog.createTask({
-        title: summary.slice(0, 80),
-        project,
-        source: 'auto-recurring',
-        priority: 'normal',
-        tags: ['recurring'],
-        context_snapshot: snapshot
-      });
-      cleanup(ctxPath, workPath);
-      return;
-    }
-
-    // --- Case 4: Substantial session (Claude gave next_step OR many files) → create task ---
-    if ((nextStep && nextStep.length > 10) || files.length >= 3) {
-      backlog.createTask({
-        title: summary.slice(0, 80),
-        project,
-        source: 'auto',
-        priority: 'normal',
-        context_snapshot: snapshot
-      });
-      cleanup(ctxPath, workPath);
-      return;
-    }
-
-    // --- Case 5: Small session → sessions log only ---
+    // --- v5.0: No auto-task creation ---
+    // Sessions are logged but never auto-create tasks.
+    // Tasks are created ONLY via explicit /todo or user request.
     cleanup(ctxPath, workPath);
 
   } catch (e) {
