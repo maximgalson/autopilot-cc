@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Autopilot Autosave v4.0.0
+// Autopilot Autosave v4.1.0
 // Stop hook — reads self-accumulated context + optional Claude bridge + git diff
 // v4.0 change: no longer depends on Claude writing the bridge file.
 // Primary source: /tmp/autopilot-context-{sessionId}.json (written by PostToolUse hook)
@@ -87,8 +87,8 @@ process.stdin.on('end', () => {
       backlog.updateTask(active.id, { sessions_count: sessions });
       backlog.suspendTask(active.id, mergedSnapshot);
 
-      // Long-term memory after 3+ sessions
-      if (sessions >= 3) {
+      // Long-term memory — capture from any session with substance
+      if (mergedSnapshot.summary && mergedSnapshot.summary.length > 20) {
         try { memory.captureFromTask({ ...active, sessions_count: sessions, context_snapshot: mergedSnapshot }); } catch {}
       }
 
@@ -105,6 +105,11 @@ process.stdin.on('end', () => {
 
     // Always log to sessions
     const sessionEntry = memory.saveSession({ summary, project, details: snapshot, session_id: sessionId });
+
+    // Auto-capture memory from substantial sessions (even without active task)
+    if (files.length >= 2 || (summary && summary.length > 30 && !summary.startsWith('Session'))) {
+      try { memory.captureFromTask({ title: summary, project, context_snapshot: snapshot, tags: [] }); } catch {}
+    }
 
     // --- Case 2: Matches existing suspended/pending task → update it ---
     const match = findMatchingTask(summary, project, files, backlog);
