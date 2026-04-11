@@ -121,34 +121,30 @@ if [ ! -f "$AUTOPILOT_DIR/config.json" ]; then
   read -p "Language / Язык (en/ru): " -r LANG_INPUT
   [[ "$LANG_INPUT" == "ru" ]] && LANG_PREF="ru"
 
-  # Detect repos
-  info "Scanning for git repos in ~/ ..."
-  REPOS_JSON="{"
-  REPO_COUNT=0
+  # Ask for working directory instead of auto-scanning
+  echo ""
+  info "Where is your main working directory?"
+  if [ "$LANG_PREF" == "ru" ]; then
+    echo -e "  ${DIM}Укажи папку, в которой ты работаешь с Claude Code.${NC}"
+    echo -e "  ${DIM}Можно нажать Enter чтобы использовать текущую: $(pwd)${NC}"
+  else
+    echo -e "  ${DIM}Enter the folder where you work with Claude Code.${NC}"
+    echo -e "  ${DIM}Press Enter to use current directory: $(pwd)${NC}"
+  fi
+  read -p "Path: " -r WORK_DIR
+  [[ -z "$WORK_DIR" ]] && WORK_DIR="$(pwd)"
+  # Expand ~ to $HOME
+  WORK_DIR="${WORK_DIR/#\~/$HOME}"
 
-  while IFS= read -r gitdir; do
-    repo_path="$(dirname "$gitdir")"
-    repo_name="$(basename "$repo_path")"
+  if [ ! -d "$WORK_DIR" ]; then
+    fail "Directory not found: $WORK_DIR"
+  fi
 
-    # Skip hidden, node_modules, etc
-    [[ "$repo_name" == .* ]] && continue
-    [[ "$repo_path" == *node_modules* ]] && continue
-    [[ "$repo_path" == */.* ]] && continue
+  WORK_NAME="$(basename "$WORK_DIR")"
+  REPOS_JSON="{\"$WORK_NAME\":{\"path\":\"$WORK_DIR\",\"keywords\":[\"$WORK_NAME\"]}}"
+  REPO_COUNT=1
 
-    if [ $REPO_COUNT -gt 0 ]; then
-      REPOS_JSON+=","
-    fi
-    REPOS_JSON+="\"$repo_name\":{\"path\":\"$repo_path\",\"keywords\":[\"$repo_name\"]}"
-    REPO_COUNT=$((REPO_COUNT + 1))
-    echo -e "  ${DIM}Found: $repo_name ($repo_path)${NC}"
-
-    # Limit to 10 repos
-    [ $REPO_COUNT -ge 10 ] && break
-  done < <(find "$HOME" -maxdepth 3 -name ".git" -type d 2>/dev/null | head -20)
-
-  REPOS_JSON+="}"
-
-  ok "Found $REPO_COUNT repos"
+  ok "Working directory: $WORK_NAME ($WORK_DIR)"
 
   # Write config
   cat > "$AUTOPILOT_DIR/config.json" <<CONFIGEOF

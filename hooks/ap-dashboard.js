@@ -105,6 +105,10 @@ process.stdin.on('end', () => {
       'If user says "todo X" or uses capture triggers, save as pending task via: ' +
       'echo \'{"title":"X","project":"...","status":"pending","priority":"normal",...}\' to ~/.claude/autopilot/backlog/task-{id}.json',
       '',
+      'IMPORTANT: NEVER auto-modify ~/.claude/autopilot/config.json. ' +
+      'Do NOT fill in focus, roadmap, repos, or any config fields automatically. ' +
+      'The user sets their own config. If config fields are empty, that is intentional — do not "help" by guessing values.',
+      '',
       'ADHD Protocol (follow silently, do not announce):',
       '- IMPORTANT: "Global focus" is just context, NOT a directive. The user decides what to work on. Do NOT push them back to global focus if they are clearly working on something else.',
       '- Only ask about defocus if the user switches topics MID-SESSION (not at session start). Starting a session on any project is intentional by definition.',
