@@ -5,3 +5,6 @@ node_modules/
 .DS_Store
 memory/*.json
 sessions/*.json
+.env
+.env.local
+*.tmp

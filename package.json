@@ -1,0 +1,20 @@
+{
+  "name": "autopilot-cc",
+  "version": "2.0.0-beta2",
+  "description": "ADHD Terminal Copilot for Claude Code — context survives between sessions.",
+  "license": "MIT",
+  "homepage": "https://github.com/maximgalson/autopilot-cc",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maximgalson/autopilot-cc.git"
+  },
+  "bin": {
+    "autopilot": "./cli/autopilot.js"
+  },
+  "scripts": {
+    "test": "node test/env.test.js && node test/backlog.test.js && node test/notion.test.js && node test/triggers.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

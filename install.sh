@@ -6,7 +6,7 @@ set -euo pipefail
 
 AUTOPILOT_DIR="$HOME/.claude/autopilot"
 SETTINGS_FILE="$HOME/.claude/settings.json"
-VERSION="1.3.0"
+VERSION="2.0.0-beta2"
 
 # Colors
 RED='\033[0;31m'
@@ -84,12 +84,40 @@ cp "$SOURCE_DIR/hooks/ap-dashboard.js" "$AUTOPILOT_DIR/hooks/"
 cp "$SOURCE_DIR/hooks/ap-statusline.js" "$AUTOPILOT_DIR/hooks/"
 cp "$SOURCE_DIR/hooks/ap-context-monitor.js" "$AUTOPILOT_DIR/hooks/"
 cp "$SOURCE_DIR/hooks/ap-autosave.js" "$AUTOPILOT_DIR/hooks/"
+cp "$SOURCE_DIR/hooks/ap-userprompt.js" "$AUTOPILOT_DIR/hooks/" 2>/dev/null || true
 
 info "Copying lib..."
 cp "$SOURCE_DIR/lib/backlog.js" "$AUTOPILOT_DIR/lib/"
 cp "$SOURCE_DIR/lib/repos.js" "$AUTOPILOT_DIR/lib/"
 cp "$SOURCE_DIR/lib/format.js" "$AUTOPILOT_DIR/lib/"
 cp "$SOURCE_DIR/lib/memory.js" "$AUTOPILOT_DIR/lib/"
+cp "$SOURCE_DIR/lib/lightrag.js" "$AUTOPILOT_DIR/lib/" 2>/dev/null || true
+cp "$SOURCE_DIR/lib/wiki.js" "$AUTOPILOT_DIR/lib/" 2>/dev/null || true
+cp "$SOURCE_DIR/lib/env.js" "$AUTOPILOT_DIR/lib/" 2>/dev/null || true
+cp "$SOURCE_DIR/lib/notion.js" "$AUTOPILOT_DIR/lib/" 2>/dev/null || true
+cp "$SOURCE_DIR/lib/errors.js" "$AUTOPILOT_DIR/lib/" 2>/dev/null || true
+
+if [ -d "$SOURCE_DIR/cli" ]; then
+  info "Copying CLI..."
+  mkdir -p "$AUTOPILOT_DIR/cli"
+  cp "$SOURCE_DIR/cli/autopilot.js" "$AUTOPILOT_DIR/cli/" 2>/dev/null || true
+  chmod +x "$AUTOPILOT_DIR/cli/autopilot.js" 2>/dev/null || true
+  # Symlink to ~/.local/bin (no sudo). Add to PATH if missing.
+  mkdir -p "$HOME/.local/bin"
+  ln -sf "$AUTOPILOT_DIR/cli/autopilot.js" "$HOME/.local/bin/autopilot"
+  if ! echo ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
+    warn "~/.local/bin is not on your PATH."
+    info "Add this to your shell rc (~/.bashrc or ~/.zshrc):"
+    echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
+  fi
+fi
+
+if [ -d "$SOURCE_DIR/scripts" ]; then
+  info "Copying maintenance scripts..."
+  mkdir -p "$AUTOPILOT_DIR/scripts"
+  cp "$SOURCE_DIR/scripts/"*.sh "$AUTOPILOT_DIR/scripts/" 2>/dev/null || true
+  chmod +x "$AUTOPILOT_DIR/scripts/"*.sh 2>/dev/null || true
+fi
 
 info "Copying skills..."
 if [ -d "$SOURCE_DIR/skills" ]; then
@@ -176,6 +204,58 @@ else
   ok "Config preserved (existing)"
 fi
 
+# --- .env: optional integrations (LightRAG, Notion) ---
+
+ENV_FILE="$AUTOPILOT_DIR/.env"
+if [ ! -f "$ENV_FILE" ]; then
+  info "Optional integrations (skip any, press Enter)"
+
+  if [ "${LANG_PREF:-en}" == "ru" ]; then
+    ASK_NOTION_TOKEN="Notion токен (с https://www.notion.so/my-integrations, или Enter): "
+    ASK_NOTION_DB="Notion Tasks DB ID (32-символьный hex, или Enter): "
+    ASK_LR_PASS="LightRAG пароль (если используешь LightRAG локально, иначе Enter): "
+  else
+    ASK_NOTION_TOKEN="Notion token (from https://www.notion.so/my-integrations, or Enter to skip): "
+    ASK_NOTION_DB="Notion Tasks DB ID (32-char hex, or Enter to skip): "
+    ASK_LR_PASS="LightRAG password (if running LightRAG locally, else Enter): "
+  fi
+
+  read -p "$ASK_NOTION_TOKEN" -r NOTION_TOKEN_INPUT
+  read -p "$ASK_NOTION_DB" -r NOTION_DB_INPUT
+  read -p "$ASK_LR_PASS" -r LR_PASS_INPUT
+
+  {
+    echo "# Autopilot environment — generated $(date -Iseconds)"
+    echo "# Edit anytime: $ENV_FILE"
+    echo ""
+    echo "# Notion sync (optional)"
+    echo "NOTION_TOKEN=${NOTION_TOKEN_INPUT}"
+    echo "NOTION_DB_ID=${NOTION_DB_INPUT}"
+    echo ""
+    echo "# LightRAG (optional)"
+    echo "LIGHTRAG_URL=http://localhost:9621"
+    echo "LIGHTRAG_USER=admin"
+    echo "LIGHTRAG_PASS=${LR_PASS_INPUT}"
+  } > "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+  ok ".env written ($ENV_FILE)"
+
+  if [ -n "$NOTION_TOKEN_INPUT" ] && [ -n "$NOTION_DB_INPUT" ]; then
+    info "Enabling Notion sync in config.json..."
+    node -e "
+      const fs = require('fs');
+      const p = '$AUTOPILOT_DIR/config.json';
+      const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+      c.notion_sync = c.notion_sync || {};
+      c.notion_sync.enabled = true;
+      c.notion_sync.database_id = '$NOTION_DB_INPUT';
+      fs.writeFileSync(p, JSON.stringify(c, null, 2));
+    " && ok "Notion sync enabled"
+  fi
+else
+  ok ".env preserved (existing)"
+fi
+
 # --- Patch settings.json ---
 
 info "Patching settings.json..."
@@ -225,6 +305,9 @@ changed = addHook('PostToolUse', 'Bash|Edit|Write|MultiEdit|Agent|Task', 'ap-con
 // Stop — autosave
 changed = addHook('Stop', '.*', 'ap-autosave.js') || changed;
 
+// UserPromptSubmit — capture triggers
+changed = addHook('UserPromptSubmit', null, 'ap-userprompt.js') || changed;
+
 // StatusLine
 if (!s.statusLine?.command?.includes('ap-statusline')) {
   s.statusLine = {
@@ -255,7 +338,7 @@ info "Verifying installation..."
 
 ERRORS=0
 
-for f in hooks/ap-dashboard.js hooks/ap-statusline.js hooks/ap-context-monitor.js hooks/ap-autosave.js lib/backlog.js lib/repos.js lib/format.js config.json VERSION; do
+for f in hooks/ap-dashboard.js hooks/ap-statusline.js hooks/ap-context-monitor.js hooks/ap-autosave.js hooks/ap-userprompt.js lib/backlog.js lib/repos.js lib/format.js lib/env.js lib/notion.js lib/lightrag.js lib/wiki.js lib/errors.js cli/autopilot.js config.json VERSION; do
   if [ ! -f "$AUTOPILOT_DIR/$f" ]; then
     warn "Missing: $f"
     ERRORS=$((ERRORS + 1))
@@ -267,11 +350,22 @@ if [ $ERRORS -eq 0 ]; then
   echo -e "${GREEN}${BOLD}Autopilot v${VERSION} installed successfully!${NC}"
   echo ""
   echo -e "  ${DIM}Config:${NC}    ~/.claude/autopilot/config.json"
+  echo -e "  ${DIM}Env:${NC}       ~/.claude/autopilot/.env"
   echo -e "  ${DIM}Tasks:${NC}     ~/.claude/autopilot/backlog/"
+  echo -e "  ${DIM}CLI:${NC}       autopilot status | list | focus | stats | inbox | doctor"
+  echo -e "  ${DIM}Errors:${NC}    ~/.claude/autopilot/errors.log"
   echo -e "  ${DIM}Docs:${NC}      ~/.claude/autopilot/README.md"
   echo ""
   echo -e "  ${CYAN}Next:${NC} Restart Claude Code. The dashboard will appear automatically."
-  echo -e "  ${CYAN}Focus:${NC} Edit config.json to set your current focus and roadmap."
+  echo -e "  ${CYAN}Try:${NC}   type \"todo first capture test\" in any session — it will be captured automatically."
+  echo -e "  ${CYAN}Focus:${NC} Edit config.json or run \`autopilot focus set \"...\"\` to set your current focus."
+  if [ -f "$AUTOPILOT_DIR/scripts/cleanup-pixel-agents.sh" ]; then
+    if grep -q "pixel-agents" "$SETTINGS_FILE" 2>/dev/null; then
+      echo ""
+      echo -e "  ${YELLOW}Heads up:${NC} pixel-agents hooks detected in settings.json — they add ~5s timeout per event."
+      echo -e "  ${YELLOW}Cleanup:${NC} bash ~/.claude/autopilot/scripts/cleanup-pixel-agents.sh"
+    fi
+  fi
   echo ""
 else
   fail "Installation incomplete ($ERRORS files missing)"

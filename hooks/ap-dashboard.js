@@ -1,15 +1,18 @@
 #!/usr/bin/env node
-// Autopilot Dashboard v1.0.0
-// SessionStart hook — shows repo status, pending tasks, suggests next action
+// Autopilot Dashboard v1.2.0
+// SessionStart hook — shows repo status, pending tasks, suggests next action.
+// v1.2 adds: Notion stale-task reminders (Due=today on Notion mobile),
+// and a local Stale block for tasks aged >14d so the user sees them in chat.
 
 const fs = require('fs');
 const path = require('path');
+try { require('../lib/env').load(); } catch {}
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 8000);
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => input += chunk);
-process.stdin.on('end', () => {
+process.stdin.on('end', async () => {
   clearTimeout(stdinTimeout);
   try {
     const data = JSON.parse(input);
@@ -61,6 +64,50 @@ process.stdin.on('end', () => {
     // No tasks in backlog message
     const noTasksMsg = allTasks.length === 0 ? '\nNo tasks in backlog. Ready for new work.\n' : '';
 
+    // LightRAG context — knowledge graph insights for current project
+    const graphLines = [];
+    try {
+      const lightrag = require('../lib/lightrag');
+      const cwd = data.cwd || process.cwd();
+      // Detect project name for targeted query
+      let projectName = 'current work';
+      for (const [name, repo] of Object.entries(config.repos || {})) {
+        if (repo.path && cwd.startsWith(repo.path)) { projectName = name; break; }
+      }
+      // Try git remote match if path didn't work
+      if (projectName === 'current work') {
+        try {
+          const { execFileSync } = require('child_process');
+          const remote = execFileSync('git', ['remote', 'get-url', 'origin'], { cwd, timeout: 2000, encoding: 'utf8' }).trim().toLowerCase();
+          for (const [name, repo] of Object.entries(config.repos || {})) {
+            if (repo.remote && remote.includes(repo.remote.toLowerCase())) { projectName = name; break; }
+          }
+        } catch {}
+      }
+
+      const query = `${projectName}: recent decisions, problems, important context`;
+      const result = await lightrag.query(query, 'local');
+      if (result) {
+        // Extract entity descriptions from JSON response
+        const descriptions = [];
+        const entityRegex = /"description":\s*"([^"]+)"/g;
+        let match;
+        while ((match = entityRegex.exec(result)) !== null) {
+          const desc = match[1].split('<SEP>')[0].trim();
+          if (desc.length > 30 && !desc.startsWith('Конкретный путь')) {
+            descriptions.push(desc);
+          }
+        }
+        if (descriptions.length > 0) {
+          graphLines.push('');
+          graphLines.push('Knowledge Graph (' + projectName + '):');
+          for (const d of descriptions.slice(0, 5)) {
+            graphLines.push('  - ' + d.slice(0, 150));
+          }
+        }
+      }
+    } catch {}
+
     // Memory context — relevant memories for current state
     const memoryLines = [];
     try {
@@ -87,13 +134,47 @@ process.stdin.on('end', () => {
           memoryLines.push(`  ${s.summary}${proj}${recurring}`);
         }
       }
-    } catch (e) {}
+    } catch (e) { try { require('../lib/errors').log(e, 'dashboard:memory'); } catch {} }
+
+    // Stale tasks (>14d, no sessions) — local block + best-effort Notion
+    // Due=today bump so Notion mobile pushes a reminder.
+    const staleLines = [];
+    const STALE_DAYS = 14;
+    const now = Date.now();
+    const stale = allTasks.filter(t => {
+      if (t.status === 'done') return false;
+      if ((t.sessions_count || 0) > 0) return false;
+      const created = Date.parse(t.created || '');
+      if (!created) return false;
+      return (now - created) > STALE_DAYS * 86400000;
+    });
+    if (stale.length > 0) {
+      staleLines.push('');
+      staleLines.push(`Stale (${stale.length}, >${STALE_DAYS}d, no sessions):`);
+      for (const t of stale.slice(0, 5)) {
+        const ageDays = Math.floor((now - Date.parse(t.created)) / 86400000);
+        const proj = t.project ? ` [${t.project}]` : '';
+        staleLines.push(`  #${t.id} "${t.title}"${proj} — ${ageDays}d old`);
+      }
+      staleLines.push('  → ask the user: archive, snooze, or activate? Do not auto-act.');
+    }
+
+    // Best-effort: bump Notion Due=today on stale tasks so mobile pushes a notif.
+    // Fire-and-forget; we cap it at 8s via the hook timeout itself.
+    try {
+      const notion = require('../lib/notion');
+      if (notion.isEnabled() && stale.length > 0) {
+        notion.markStaleTasksOverdue(stale, { thresholdDays: STALE_DAYS }).catch(() => {});
+      }
+    } catch {}
 
     const contextMessage = [
       'AUTOPILOT SESSION START',
       '========================',
       dashboard,
       ...focusLines,
+      ...staleLines,
+      ...graphLines,
       ...memoryLines,
       noTasksMsg,
       'Routing:',
@@ -130,7 +211,7 @@ process.stdin.on('end', () => {
 
     process.stdout.write(JSON.stringify(output));
   } catch (e) {
-    // Silent fail — never block session start
+    try { require('../lib/errors').log(e, 'dashboard:fatal'); } catch {}
     process.exit(0);
   }
 });

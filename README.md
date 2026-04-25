@@ -1,36 +1,81 @@
 # Autopilot — ADHD Terminal Copilot for Claude Code
 
-![autopilot-cc-banner-v4](https://github.com/user-attachments/assets/ee825c39-0b4f-446c-bbd4-00bb3ad60a40)
-
 > Your brain doesn't hold context between sessions. Autopilot does.
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue)](https://github.com/maximgalson/autopilot-cc/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0--beta1-blue)](https://github.com/maximgalson/autopilot-cc/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-compatible-purple)](https://claude.ai)
 
 ---
 
-## The Problem
+## What you get in 60 seconds
+
+```bash
+git clone https://github.com/maximgalson/autopilot-cc.git /tmp/autopilot-cc
+cd /tmp/autopilot-cc && bash install.sh
+# answers 3 prompts (language, working dir, optional Notion/LightRAG creds)
+# restart Claude Code
+```
+
+Now in any Claude Code session:
+
+```
+You:    todo проверить вебхук в боте [high]
+Claude: Captured #abc — задача создана и синкнута в Notion ✓
+```
+
+```
+You:    /save dashboard-fix
+You:    *closes terminal, sleeps, opens it next morning*
+You:    /back dashboard-fix
+Claude: ← restored 8-line context: what you did, what's next, what's blocking
+```
+
+```
+$ autopilot status
+Focus:    ship v2.0
+Active:   #abc "проверить вебхук"
+Pending:  3
+Suspended:1
+Stale:    1 (>14d, no sessions)
+```
+
+That's it. No accounts, no SaaS, all local files.
+
+---
+
+## Why it exists
 
 You close a Claude Code session. Next day you open a new one. Claude has no idea what you were doing. You waste 10 minutes explaining context. Repeat daily.
 
-**Autopilot fixes this.** 4 hooks run silently inside Claude Code, capturing your work, saving context, and restoring it when you return.
+If you have ADHD: you also have a backlog of "todo" items you said but never wrote down, an inbox of half-thought notes, and three started-but-never-finished tasks for every one you ship.
 
-## What It Does
+**Autopilot fixes both.** Five hooks run silently inside Claude Code, capturing context, saving sessions, catching capture triggers in your prompts, and bumping stale tasks onto your phone via Notion. A small CLI lets you check status without opening Claude.
+
+---
+
+## What's inside
 
 | Hook | When | What |
 |------|------|------|
-| **Dashboard** | Session start | Shows your repos, tasks, focus, suggests next step |
-| **Statusline** | Always visible | Model + active task + context usage bar |
-| **Context Monitor** | Every 30 tool calls | Saves session checkpoint automatically |
-| **Autosave** | Session end | Captures summary + next step for tomorrow |
+| **Dashboard** | Session start | Repos, tasks, focus, knowledge graph, memory, **Stale block**, suggestion |
+| **StatusLine** | Always visible | Model + active task + context-usage bar |
+| **Context Monitor** | Every 30 tool calls | Auto-checkpoint, crash-safe snapshot of files/commands |
+| **Autosave** | Session end | Captures summary + next step, writes wiki + LightRAG |
+| **UserPromptSubmit** *(new in 2.0)* | Every user prompt | Catches `todo`, `не забыть`, `later`, ... → creates task + Notion |
 
 Plus:
-- **Memory layer** that grows over time and surfaces relevant context
-- **ADHD Protocol** that detects defocus and helps you return
-- **4 slash commands**: `/save`, `/back`, `/todo`, `/update`
+- **Memory layer** — full-text search, recency + frequency boost, recurring topics
+- **Notion sync** *(new in 2.0)* — bi-directional, schema-aware, no npm dep
+- **CLI tool** *(new in 2.0)* — `autopilot status | list | focus | stats | inbox | doctor`
+- **Slash commands** — `/save`, `/back`, `/todo`, `/inbox` *(new)*, `/review` *(new)*, `/update`
+- **ADHD Protocol** — defocus detection, "good enough?" check after 3+ sessions, no guilt
 
-## Quick Start
+---
+
+## Quick start
+
+See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for a 5-minute walkthrough.
 
 ### Install
 
@@ -39,71 +84,58 @@ git clone https://github.com/maximgalson/autopilot-cc.git /tmp/autopilot-cc
 cd /tmp/autopilot-cc && bash install.sh
 ```
 
-The installer will:
-1. Ask your language (en/ru)
-2. Ask your working directory
-3. Set up hooks in `~/.claude/settings.json`
-4. Generate your personal `config.json`
+The installer asks:
+1. Language (en/ru)
+2. Your main working directory
+3. Optional: Notion token + DB ID, LightRAG password
 
-**Restart Claude Code after installation.**
+It writes:
+- `~/.claude/autopilot/config.json` (your repos, focus, capture triggers)
+- `~/.claude/autopilot/.env` (secrets, chmod 600)
+- 5 hooks into `~/.claude/settings.json`
+- `~/.local/bin/autopilot` symlink (tells you to add it to PATH if missing)
+
+**Restart Claude Code** after installation.
 
 ### Update
 
 ```bash
 bash ~/.claude/autopilot/update.sh
+# or type `/update` inside Claude Code
 ```
 
-Or type `/update` inside Claude Code. Config and tasks are preserved.
+Pulls the latest from GitHub. Your `config.json`, `.env`, and `backlog/` are preserved.
 
-### Works With
+### Cleanup leftover hooks (one-time, if upgrading from v1.x)
 
-- **Claude Code CLI** (terminal)
-- **Claude Code in VS Code** (extension uses the same `~/.claude/` config)
-- **Claude Code Desktop App**
-
-No extra setup needed for VS Code. If hooks are in `~/.claude/settings.json`, they work everywhere.
-
-## How It Works
-
-```
-Session start
-  |
-  Dashboard shows: repos, tasks, focus, recent sessions
-  |
-You work normally
-  |
-Every 30 tool calls --> checkpoint saves context silently
-  |
-Session ends --> autosave captures what you did + next step
-  |
-Next session --> dashboard restores your context in 3 lines
+```bash
+bash ~/.claude/autopilot/scripts/cleanup-pixel-agents.sh --dry-run
+bash ~/.claude/autopilot/scripts/cleanup-pixel-agents.sh
 ```
 
-## Slash Commands
+Removes orphan pixel-agents passthrough hooks that add ~5s per event.
 
-### `/save` + `/back` — Session Memory
+---
+
+## Slash commands
+
+### `/save` + `/back` — session memory
 
 ```
-Working on dashboard fixes...
-> /save dashboard        # saves 8-line snapshot
+> /save dashboard
+Saved: ~/.claude/autopilot/sessions/dashboard.md (8 lines)
 
-Next day:
-> /back                  # shows all saved sessions
-> /back dashboard        # restores context instantly
+[next morning]
+> /back dashboard
+Done: fixed Stale block, added markStaleTasksOverdue.
+Result: 6/7 smoke tests pass.
+Next step: wire env.load() into ap-autosave.
+Blockers: none.
 ```
 
-`/save` captures what you did, what's next, and blockers. Max 8 lines, overwrites each time.
+`/save` overwrites; `/back` lists all sessions. Cross-project, cross-machine.
 
-`/back` shows a table of all sessions. Pick one and continue.
-
-| | `claude --resume` | `/save` + `/back` |
-|---|---|---|
-| Saves | Entire chat | 8-line essence |
-| Sessions | Last one | Any number, named |
-| Context cost | Heavy | Minimal |
-| Cross-project | No | Yes |
-
-### `/todo` — Task Creation
+### `/todo` — explicit task creation
 
 ```
 /todo Fix the webhook verification
@@ -111,100 +143,182 @@ Next day:
 /todo [my-project] Refactor auth
 ```
 
-Creates a markdown file with context, next step, and work log. When you return, Claude reads it and picks up where you left off.
+Creates a task locally, syncs to Notion if enabled. Stores `notion.url` back into the task JSON for idempotent updates.
 
-### `/update` — Self-Update
+### `/inbox` — wiki inbox processor *(new in 2.0)*
 
-Pulls the latest version from GitHub. Preserves your config and tasks.
+```
+/inbox            # list with suggested destinations
+/inbox process    # interactive: Move / Different folder / Skip / Delete
+```
 
-## ADHD Protocol
+Routes loose notes from `~/claudecode/wiki/inbox/` into the right folder.
+
+### `/review` — post-session review *(new in 2.0)*
+
+```
+/review           # last 5 sessions: what you said you'd do next, decide done/todo/ignore
+/review weekly    # 7-day digest: active days, sessions, tasks, stale, top project
+```
+
+Pulls "next_step" from each session and lets you convert them into real tasks (with Notion sync).
+
+### `/update` — self-update
+
+```
+/update
+```
+
+Pulls latest. Preserves config, env, tasks.
+
+---
+
+## Capture triggers (new in 2.0)
+
+Configured in `config.json` under `capture_triggers`. Defaults:
+
+```json
+"capture_triggers": ["todo", "потом надо", "не забыть", "позже сделать", "задача на потом", "в очередь"]
+```
+
+When you type one of these in chat:
+
+```
+You: не забыть [high] [my-project] обновить депенденси в проде
+Hook: AUTOPILOT CAPTURED:
+  #xyz "обновить депенденси в проде" [my-project] [high] → Notion ✓
+Claude: понял, задача в бэклоге.
+```
+
+False-positive guards:
+- Lines starting with `git`, `npm`, `node`, `bash`, `curl`, ... are skipped (commands, not intent).
+- Triggers inside backticks, fenced code blocks, or quotes are skipped.
+- Lines with no real text after the trigger are skipped.
+
+Add or remove triggers in `config.json` — the hook reads it on every prompt.
+
+---
+
+## Notion sync (new in 2.0)
+
+Set `notion_sync.enabled: true` and `notion_sync.database_id: "<32-char hex>"` in `config.json`. Put `NOTION_TOKEN=secret_…` in `~/.claude/autopilot/.env`.
+
+`lib/notion.js` does **schema discovery** on first call: it queries your DB and only writes properties that actually exist there. Required: a `title` property (any name). Optional: `Status`, `Priority`, `Project`, `Due`, `Tags`, `Autopilot ID`. Missing properties are silently skipped — no schema migration required.
+
+**Stale-task reminders.** Tasks aged >14 days with no sessions get their Notion `Due` bumped to today during the SessionStart hook. Notion mobile then pushes a notification. This replaces the never-built in-process scheduler — Notion already does it better.
+
+---
+
+## CLI tool (new in 2.0)
+
+```
+autopilot status        # one-screen summary
+autopilot list          # all open tasks (or: list pending, list active, list all)
+autopilot focus set "ship v2.0"
+autopilot focus why "deadline next week"
+autopilot focus clear
+autopilot stats 7       # 7-day digest
+autopilot inbox         # list wiki inbox with suggested folders
+autopilot doctor        # health check: hooks, env, Notion, LightRAG, recent errors
+```
+
+Useful from cron (`autopilot stats 7 | mail -s "weekly autopilot" me@…`) or from non-Claude terminals.
+
+---
+
+## ADHD protocol
 
 Built-in, runs silently:
 
-- **Defocus detection** — switches topics mid-session? Asks: "conscious switch or defocus?"
-- **No guilt** — defocus is normal. Notes it and offers to return.
-- **Session tracking** — task active for 3+ sessions? "Is this done enough?"
+- **No guilt** — defocus is normal. Note it, offer to return.
+- **Defocus detection** — only mid-session, not at session start (starting on any project is intentional).
+- **"Good enough?" check** — after 3+ sessions on the same task: "is this done enough to ship?"
 - **One option** — not five. Reduces decision fatigue.
 - **Compact output** — no walls of text.
+- **Stale flag** — tasks aging without sessions get nudged in dashboard + Notion mobile push.
 
-## Configuration
+Full philosophy: [ADHD-METHOD.md](ADHD-METHOD.md).
 
-Edit `~/.claude/autopilot/config.json`:
+---
 
-```json
-{
-  "user": { "name": "You", "language": "en" },
-  "repos": {
-    "my-project": {
-      "path": "/path/to/project",
-      "keywords": ["project", "main"]
-    }
-  },
-  "focus": {
-    "current": "Launch v2",
-    "why": "Deadline next week",
-    "roadmap": ["Backend", "Frontend", "Deploy"]
-  },
-  "capture_triggers": ["todo", "don't forget", "later"]
-}
-```
+## Privacy
 
-| Field | What |
-|-------|------|
-| `repos` | Your projects with paths and keywords for routing |
-| `focus` | Current focus shown in dashboard (optional) |
-| `capture_triggers` | Phrases that auto-create tasks |
-| `global_agents` | Cross-project agents with keyword routing |
+Everything is local files. No SaaS, no telemetry.
 
-## File Structure
+Optional integrations:
+- **Notion** — opt-in. Reads/writes one database you control. Token in `.env` (chmod 600), never in source.
+- **LightRAG** — opt-in. Self-hosted. Token in `.env`.
+- **qmd** — local MCP for wiki search. No network.
+
+---
+
+## File layout
 
 ```
 ~/.claude/autopilot/
   config.json              # Your config (preserved on update)
-  update.sh                # Self-updater
+  .env                     # Secrets (chmod 600, gitignored)
+  errors.log               # Rotating error log (10 MB max)
   VERSION                  # Current version
   hooks/
-    ap-dashboard.js        # SessionStart — shows context
-    ap-statusline.js       # StatusLine — always visible
-    ap-context-monitor.js  # PostToolUse — checkpoints
-    ap-autosave.js         # Stop — saves session
+    ap-dashboard.js        # SessionStart
+    ap-statusline.js       # StatusLine
+    ap-context-monitor.js  # PostToolUse
+    ap-autosave.js         # Stop
+    ap-userprompt.js       # UserPromptSubmit (new)
   lib/
     backlog.js             # Task CRUD
     repos.js               # Git status
-    format.js              # ADHD-friendly output
-    memory.js              # Memory layer
+    format.js              # Output formatting
+    memory.js              # Memory layer + sessions
+    lightrag.js            # Optional LightRAG client
+    wiki.js                # Wiki appender
+    env.js                 # .env loader (new)
+    notion.js              # Notion REST client (new)
+    errors.js              # Central error log (new)
+  cli/
+    autopilot.js           # CLI binary (new)
+  scripts/
+    cleanup-pixel-agents.sh # One-time cleanup (new)
   backlog/                 # Tasks (JSON)
-  sessions/                # Session logs (auto)
+  sessions/                # Session digests (auto)
   memory/                  # Long-term memory
 ```
 
-## Task Lifecycle
+---
+
+## Task lifecycle
 
 ```
 pending --> active --> suspended --> active --> done
-                         ^                      |
-                         +----------------------+
+                          ^                       |
+                          +-----------------------+
 ```
 
-Tasks are created explicitly via `/todo`. Sessions are logged automatically. No backlog spam.
+Tasks are created **explicitly** — via `/todo`, capture triggers, or `/review`. Sessions are logged automatically. No backlog spam (this was a bug in pre-1.2 — fixed).
+
+---
 
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) (CLI, VS Code extension, or Desktop)
 - Node.js 18+
+- `jq` (only if you run `scripts/cleanup-pixel-agents.sh`)
+
+---
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Author
 
 **Max Galson** — [galson.pro](https://galson.pro)
 
-Built from managing 6 projects with ADHD. Now it's the external brain I always needed.
+Built from running 6 projects with ADHD. Now it's the external brain I always needed.
 
 - Blog: [galson.pro/blog](https://galson.pro/blog)
-- Telegram: [@galsonpro](https://t.me/galsonproai)
+- Telegram: [@galsonproai](https://t.me/galsonproai)
 - GitHub: [@maximgalson](https://github.com/maximgalson)
 
 ## License

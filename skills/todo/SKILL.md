@@ -55,12 +55,23 @@ created: {YYYY-MM-DD}
 - {YYYY-MM-DD} — Created
 ```
 
-### 3. Create backlog entry
+### 3. Create backlog entry + sync to Notion (if enabled)
 
 ```bash
 node -e "
-const bl = require('$HOME/.claude/autopilot/lib/backlog.js');
-bl.createTask({ title: 'TITLE', project: 'PROJECT', priority: 'PRIORITY', source: 'manual' });
+(async () => {
+  try { require('$HOME/.claude/autopilot/lib/env').load(); } catch {}
+  const bl = require('$HOME/.claude/autopilot/lib/backlog.js');
+  const notion = require('$HOME/.claude/autopilot/lib/notion.js');
+  const task = bl.createTask({ title: 'TITLE', project: 'PROJECT', priority: 'PRIORITY', source: 'manual' });
+  if (notion.isEnabled()) {
+    const res = await notion.upsertTask(task);
+    if (res?.page_id) bl.updateTask(task.id, { notion: { page_id: res.id || res.page_id, url: res.url, last_synced: new Date().toISOString() } });
+    console.log(JSON.stringify({ id: task.id, notion: res?.url || null }));
+  } else {
+    console.log(JSON.stringify({ id: task.id, notion: null }));
+  }
+})();
 "
 ```
 
@@ -71,7 +82,12 @@ Task #{id}: {title}
   File: ~/.claude/autopilot/tasks/{slug}.md
   Priority: {priority}
   Project: {project}
+  Notion: {url}                  # only if notion_sync.enabled
 ```
+
+If `notion.isEnabled()` returned false, omit the Notion line. If sync failed
+(stderr line starting with `[autopilot:notion]`), still confirm task creation
+locally — Notion sync is best-effort.
 
 ## Updating Tasks
 
@@ -81,6 +97,18 @@ When returning to a task:
 - Append to Log section
 - Update Next Step
 
-## Notion Integration (optional)
+## Notion Integration
 
-If `notion_sync.enabled: true` in config.json, also create a page in your Notion database. See config.json for database_id and API setup.
+Auto-enabled when `config.notion_sync.enabled: true` and `NOTION_TOKEN`/`NOTION_DB_ID`
+are present in `~/.claude/autopilot/.env`. Set both during `bash install.sh`, or
+edit the files manually and restart Claude Code.
+
+`lib/notion.js` performs schema discovery against the target Notion database
+on first use, so the integration only requires a `title` property — every
+other field (Status, Priority, Project, Due, Tags) is mapped if present and
+silently skipped otherwise. The `notion.page_id` returned by Notion is stored
+back into the task JSON so subsequent updates patch the same page.
+
+For stale-task reminders, dashboard's SessionStart hook calls
+`notion.markStaleTasksOverdue()` which sets `Due = today` on tasks older than
+14 days — Notion mobile then pushes a notification.

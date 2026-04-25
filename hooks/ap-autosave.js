@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Autopilot Autosave v5.2.0
+// Autopilot Autosave v5.3.0 — unified memory (wiki + LightRAG)
 // Stop hook — reads self-accumulated context + optional Claude bridge + git diff
 // v5.0: NO auto-task creation. Sessions go to log only.
 //   Tasks are created ONLY explicitly via /todo or user request.
@@ -10,12 +10,13 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
+try { require('../lib/env').load(); } catch {}
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 5000);
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => input += chunk);
-process.stdin.on('end', () => {
+process.stdin.on('end', async () => {
   clearTimeout(stdinTimeout);
   try {
     const data = JSON.parse(input);
@@ -25,6 +26,8 @@ process.stdin.on('end', () => {
 
     const backlog = require('../lib/backlog');
     const memory = require('../lib/memory');
+    const wiki = require('../lib/wiki');
+    const lightrag = require('../lib/lightrag');
 
     // --- Primary source: self-accumulated context ---
     let accumulated = null;
@@ -101,6 +104,7 @@ process.stdin.on('end', () => {
       }
 
       memory.saveSession({ summary: mergedSnapshot.summary, project, details: mergedSnapshot, session_id: sessionId });
+      await flushToWikiAndGraph(project, mergedSnapshot, sessionId);
       cleanup(ctxPath, workPath);
       return;
     }
@@ -113,6 +117,7 @@ process.stdin.on('end', () => {
 
     // Always log to sessions
     memory.saveSession({ summary, project, details: snapshot, session_id: sessionId });
+    await flushToWikiAndGraph(project, snapshot, sessionId);
 
     // Auto-capture memory from substantial sessions (even without active task)
     if (files.length >= 2 || (summary && summary.length > 30 && !summary.startsWith('Session'))) {
@@ -137,9 +142,32 @@ process.stdin.on('end', () => {
     cleanup(ctxPath, workPath);
 
   } catch (e) {
-    // Silent fail
+    try { require('../lib/errors').log(e, 'autosave:fatal'); } catch {}
   }
 });
+
+async function flushToWikiAndGraph(project, snapshot, sessionId) {
+  // 1. Wiki — sync, always works
+  try {
+    wiki.appendSessionToProject(project, snapshot);
+  } catch {}
+
+  // 2. LightRAG — async, best-effort
+  try {
+    const date = new Date().toISOString().slice(0, 10);
+    const files = (snapshot.files_touched || []).map(f => path.basename(f)).join(', ');
+    const text = [
+      `Session: ${date}`,
+      `Project: ${project || 'unknown'}`,
+      `Summary: ${snapshot.summary}`,
+      files ? `Files: ${files}` : '',
+      snapshot.git_summary ? `Git: ${snapshot.git_summary}` : '',
+      snapshot.next_step ? `Next: ${snapshot.next_step}` : ''
+    ].filter(Boolean).join('\n');
+
+    await lightrag.insertText(text, `session-${sessionId || date}`);
+  } catch {}
+}
 
 function cleanup(...paths) {
   for (const p of paths) {

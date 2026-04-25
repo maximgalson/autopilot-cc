@@ -1,5 +1,33 @@
 # Changelog
 
+## v2.0.0-beta2 (2026-04-25)
+
+**Inbox + review skills, CLI tool, error log, smoke tests, README v2.**
+
+- **`/inbox` skill** — sweeps `~/claudecode/wiki/inbox/`, suggests a destination folder per file (`decisions/`, `feedback/`, `references/`, `clients/`, or `projects/`) based on filename + first-line heuristics. `/inbox process` walks files interactively (Move / Different folder / Skip / Delete with explicit confirm).
+- **`/review` skill** — pulls `next_step` from the last 5 sessions and lets the user convert each into a real task (with Notion sync) or mark it done/ignored. `/review weekly` shows a 7-day digest: active days, sessions, tasks created/completed, stale list, top project, recurring topics, inbox count.
+- **`lib/errors.js`** — append-only error log at `~/.claude/autopilot/errors.log`, rotating at 10 MB. Replaces silent `} catch {}` blocks in `ap-dashboard.js`, `ap-autosave.js`, `ap-userprompt.js`. `autopilot doctor` reads the tail.
+- **`cli/autopilot.js`** — standalone CLI with `status`, `list [pending|active|suspended|all]`, `focus set/clear/why`, `stats [days]`, `inbox`, `doctor`, `help`. Symlinked to `~/.local/bin/autopilot` by `install.sh`. Reads installed lib so it works even outside Claude Code (cron-friendly).
+- **`test/` + `npm test`** — 38 smoke tests across 4 files (env loader, backlog CRUD, notion property mapping + isEnabled gating, capture-trigger parser including unicode + false-positive guards). All green.
+- **README v2** — hero block "what you get in 60 seconds", three killer-feature demos, full slash-command reference, capture-trigger explanation, Notion sync walkthrough, CLI reference, file layout. Old README archived to git history.
+- **`docs/QUICKSTART.md`** — five-minute install-to-first-capture walkthrough including Notion enablement and a troubleshooting table.
+- **Installer** — copies `lib/errors.js` and `cli/autopilot.js`, creates the `~/.local/bin/autopilot` symlink, prints PATH hint when `~/.local/bin` is missing from `$PATH`, plus a "try `todo first capture test`" tip on success.
+- **`package.json`** — proper `bin`, `scripts.test`, `engines.node>=18`. No runtime deps (Notion sync uses native `fetch`).
+
+## v2.0.0-beta1 (2026-04-25)
+
+**Capture triggers, Notion sync, secrets out of code, pixel-agents cleanup.**
+
+- **UserPromptSubmit hook (`hooks/ap-userprompt.js`)** — `todo X`, `не забыть X`, etc. now create pending tasks automatically. Parses `[high]` / `[low]` / `[normal]` priority and `[project-name]` tags inline. Skips shell prefixes (`git`, `npm`, ...) and quoted/backticked occurrences.
+- **Notion sync (`lib/notion.js`)** — bi-directional task sync via Notion REST API (no npm dep). Schema discovery: only properties present in the target DB are written; missing ones silently skipped. Stores `notion.page_id` on each task for idempotent updates.
+- **Stale-task reminders via Notion** — dashboard now flags tasks aged >14d with no sessions and best-effort bumps `Due = today` in Notion so mobile pushes a notification. Replaces the never-implemented in-process scheduler.
+- **`/todo` skill rewired** — creates locally + upserts into Notion in one step, persists `notion.url` back into the task JSON.
+- **Secrets out of source** — `lib/lightrag.js` no longer hardcodes a fallback password. Added `lib/env.js`, a zero-dep loader for `~/.claude/autopilot/.env`, and `.env.example`. `install.sh` prompts for `NOTION_TOKEN`, `NOTION_DB_ID`, `LIGHTRAG_PASS` and writes `.env` (chmod 600). `notion_sync.enabled` auto-flips to true if both Notion fields were entered.
+- **Wiki path cleanup** — `lib/wiki.js` resolves `WIKI_DIR` to `$HOME/claudecode/wiki` (Galson hub convention) or `$HOME/.claude/autopilot/wiki` instead of the legacy `/root/...` fallback.
+- **`scripts/cleanup-pixel-agents.sh`** — surgical jq-based remover for orphan pixel-agents hook entries in `~/.claude/settings.json`. Backs up before writing, refuses to write if any reference remains. Has `--dry-run` and `--remove-dir` flags.
+- **Installer** — copies the new lib files (`lightrag.js`, `wiki.js`, `env.js`, `notion.js`) and hook (`ap-userprompt.js`), copies `scripts/` into the install dir, registers UserPromptSubmit in `settings.json`, and prints a heads-up when leftover pixel-agents references are detected.
+- **Doc** — `skills/todo/SKILL.md` documents the Notion integration end-to-end (token, DB ID, schema discovery, mobile push reminders).
+
 ## v1.3.0 (2026-04-11)
 
 **Mandatory checkpoints, clean summaries, self-updater.**

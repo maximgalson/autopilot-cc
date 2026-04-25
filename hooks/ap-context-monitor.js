@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-// Autopilot Context Monitor v3.1.0
+// Autopilot Context Monitor v3.2.0
 // PostToolUse hook — self-accumulates context from tool calls + low-context warnings
 // v3.0 change: hook itself writes /tmp/autopilot-context-{sessionId}.json instead
 // of relying on Claude to write a bridge file. No Claude cooperation required.
+// v3.2 change: auto-checkpoint at WARNING threshold — writes crash-safe snapshot
+// to /tmp/autopilot-checkpoint-{sessionId}.json without relying on Claude.
 
 const fs = require('fs');
 const os = require('os');
@@ -90,6 +92,7 @@ process.stdin.on('end', () => {
 
     // --- Context warnings (override periodic if context is low) ---
     const metricsPath = path.join(tmpDir, `claude-ctx-${sessionId}.json`);
+    const checkpointPath = path.join(tmpDir, `autopilot-checkpoint-${sessionId}.json`);
     if (fs.existsSync(metricsPath)) {
       try {
         const metrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
@@ -98,6 +101,34 @@ process.stdin.on('end', () => {
         if (!metrics.timestamp || (now - metrics.timestamp) <= STALE_SECONDS) {
           const remaining = metrics.remaining_percentage;
           const usedPct = metrics.used_pct;
+
+          // --- AUTO-CHECKPOINT: crash-safe snapshot written by hook itself ---
+          // Fires at WARNING and CRITICAL thresholds, does NOT depend on Claude
+          if (remaining <= WARNING_THRESHOLD) {
+            try {
+              const checkpoint = {
+                session_id: sessionId,
+                timestamp: new Date().toISOString(),
+                context_remaining: remaining,
+                context_used: usedPct,
+                level: remaining <= CRITICAL_THRESHOLD ? 'critical' : 'warning',
+                cwd: ctx.last_cwd,
+                files_touched: ctx.files_touched,
+                commands_run: ctx.commands_run,
+                tool_count: ctx.tool_count,
+                note: 'Auto-checkpoint by ap-context-monitor. Session may have crashed after this point.'
+              };
+              // Also merge in any existing Claude-written summary
+              if (fs.existsSync(savePath)) {
+                try {
+                  const existing = JSON.parse(fs.readFileSync(savePath, 'utf8'));
+                  if (existing.summary) checkpoint.summary = existing.summary;
+                  if (existing.next_step) checkpoint.next_step = existing.next_step;
+                } catch {}
+              }
+              fs.writeFileSync(checkpointPath, JSON.stringify(checkpoint, null, 2));
+            } catch {}
+          }
 
           if (remaining <= CRITICAL_THRESHOLD) {
             const isEscalation = state.lastWarnLevel !== 'critical';
@@ -108,7 +139,7 @@ process.stdin.on('end', () => {
               state.callsSinceWarn = 0;
               state.lastSaveAt = state.totalCalls;
               message = `CONTEXT CRITICAL: ${usedPct}% used, ${remaining}% remaining. ` +
-                'Save work context NOW: ' +
+                'Auto-checkpoint saved. Save higher-quality summary NOW: ' +
                 `echo '{"summary":"...","next_step":"..."}' > ${savePath} ` +
                 'Then inform the user that context is low and suggest wrapping up.';
             }
@@ -121,7 +152,7 @@ process.stdin.on('end', () => {
               state.callsSinceWarn = 0;
               state.lastSaveAt = state.totalCalls;
               message = `CONTEXT WARNING: ${usedPct}% used, ${remaining}% remaining. ` +
-                'Save work context: ' +
+                'Auto-checkpoint saved. Write better summary: ' +
                 `echo '{"summary":"...","next_step":"..."}' > ${savePath} ` +
                 'Avoid starting new complex work.';
             }
