@@ -1,0 +1,19 @@
+{
+  "name": "autopilot-cc",
+  "version": "1.0.0",
+  "description": "ADHD Terminal Copilot for Codex — context survives between sessions. Slash commands routed through the autopilot MCP server.",
+  "author": "Max Galson",
+  "license": "MIT",
+  "homepage": "https://github.com/maximgalson/autopilot-cc",
+  "requires": {
+    "mcp_servers": ["autopilot"]
+  },
+  "commands": [
+    { "name": "save",   "file": "commands/save.md" },
+    { "name": "back",   "file": "commands/back.md" },
+    { "name": "todo",   "file": "commands/todo.md" },
+    { "name": "inbox",  "file": "commands/inbox.md" },
+    { "name": "review", "file": "commands/review.md" },
+    { "name": "update", "file": "commands/update.md" }
+  ]
+}

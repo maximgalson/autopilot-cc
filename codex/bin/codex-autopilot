@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# Autopilot wrapper for Codex CLI v1.0.0
+#
+# Replacement for Claude Code's SessionStart + Stop hooks:
+#   1. Prints dashboard before launching codex (cold open).
+#   2. Starts a background heartbeat that snapshots state every N minutes.
+#   3. Catches normal exit (trap) and runs autosave-codex.
+#   4. Detects orphaned previous sessions and offers `codex resume --last`.
+#
+# Usage:
+#   codex-autopilot                # interactive
+#   codex-autopilot exec "..."     # one-shot
+#   codex-autopilot resume         # forwards to codex resume
+#
+# Bypass dashboard / heartbeat:
+#   AUTOPILOT_SKIP=1 codex-autopilot ...
+#
+# Configure:
+#   AUTOPILOT_HOME       (default: ~/.codex/autopilot)
+#   AUTOPILOT_HEARTBEAT  seconds between snapshots (default: 360 = 6 min)
+
+set -u
+
+AUTOPILOT_HOME="${AUTOPILOT_HOME:-$HOME/.codex/autopilot}"
+AUTOPILOT_HEARTBEAT="${AUTOPILOT_HEARTBEAT:-360}"
+SESSION_ID="${AUTOPILOT_SESSION_ID:-codex-$(date +%s)-$$}"
+SESSIONS_DIR="$AUTOPILOT_HOME/sessions"
+CURRENT_FILE="$SESSIONS_DIR/current.json"
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HEARTBEAT_BIN="$BIN_DIR/ap-heartbeat.js"
+DASHBOARD_BIN="$BIN_DIR/ap-dashboard-codex.js"
+AUTOSAVE_BIN="$BIN_DIR/ap-autosave-codex.js"
+
+export AUTOPILOT_HOME
+export AUTOPILOT_SESSION_ID="$SESSION_ID"
+
+mkdir -p "$SESSIONS_DIR"
+
+# Locate codex binary (avoid recursion if user aliased codex → codex-autopilot).
+locate_codex() {
+  local candidates=(
+    "$(command -v codex 2>/dev/null || true)"
+    "$HOME/.npm-global/bin/codex"
+    "/usr/local/bin/codex"
+    "/opt/homebrew/bin/codex"
+  )
+  for c in "${candidates[@]}"; do
+    if [ -n "${c:-}" ] && [ -x "$c" ] && [ "$(realpath "$c" 2>/dev/null || echo "$c")" != "$(realpath "$0" 2>/dev/null || echo "$0")" ]; then
+      printf '%s' "$c"
+      return 0
+    fi
+  done
+  return 1
+}
+
+CODEX_BIN="$(locate_codex || true)"
+if [ -z "${CODEX_BIN:-}" ]; then
+  echo "codex-autopilot: codex CLI not found in PATH. Install it from https://github.com/openai/codex" >&2
+  exit 127
+fi
+
+# Fast path: skip all autopilot machinery
+if [ "${AUTOPILOT_SKIP:-0}" = "1" ]; then
+  exec "$CODEX_BIN" "$@"
+fi
+
+# ---- 1. Orphan recovery ----------------------------------------------------
+if [ -f "$CURRENT_FILE" ]; then
+  STATUS=$(node -e 'try{const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(j.status||"running")}catch{process.stdout.write("unknown")}' "$CURRENT_FILE" 2>/dev/null || echo unknown)
+  if [ "$STATUS" != "saved" ] && [ "$STATUS" != "exited" ]; then
+    LAST=$(node -e 'try{const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(j.last_activity||j.started||"")}catch{}' "$CURRENT_FILE" 2>/dev/null)
+    echo ""
+    echo "⚠ Previous session looks interrupted (status=$STATUS, last activity: ${LAST:-unknown})."
+    echo "  Tip: 'codex resume --last' restores it, or '/save' in codex to acknowledge."
+    echo ""
+  fi
+fi
+
+# ---- 2. Dashboard cold open ------------------------------------------------
+if [ -f "$DASHBOARD_BIN" ]; then
+  node "$DASHBOARD_BIN" || true
+fi
+
+# ---- 3. Heartbeat daemon ---------------------------------------------------
+HEARTBEAT_PID=""
+if [ -f "$HEARTBEAT_BIN" ]; then
+  AUTOPILOT_HEARTBEAT_INTERVAL="$AUTOPILOT_HEARTBEAT" \
+    node "$HEARTBEAT_BIN" >/dev/null 2>&1 &
+  HEARTBEAT_PID=$!
+  disown "$HEARTBEAT_PID" 2>/dev/null || true
+fi
+
+# ---- 4. Trap-based autosave ------------------------------------------------
+cleanup() {
+  local rc=$?
+  # stop heartbeat first to release current.json
+  if [ -n "$HEARTBEAT_PID" ] && kill -0 "$HEARTBEAT_PID" 2>/dev/null; then
+    kill "$HEARTBEAT_PID" 2>/dev/null || true
+    wait "$HEARTBEAT_PID" 2>/dev/null || true
+  fi
+  # final autosave
+  if [ -f "$AUTOSAVE_BIN" ]; then
+    AUTOPILOT_EXIT_CODE="$rc" node "$AUTOSAVE_BIN" >/dev/null 2>&1 || true
+  fi
+  return $rc
+}
+trap cleanup EXIT INT TERM HUP
+
+# ---- 5. Hand off to codex --------------------------------------------------
+"$CODEX_BIN" "$@"

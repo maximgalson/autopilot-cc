@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "engine": "codex",
+  "user": {
+    "name": "Max Galson",
+    "language": "ru"
+  },
+  "repos": {
+    "example-project": {
+      "path": "/Users/you/projects/example",
+      "remote": "yourname/example",
+      "keywords": ["example", "demo"],
+      "agents": [],
+      "skills": []
+    }
+  },
+  "capture_triggers": ["todo", "не забыть", "потом надо", "backlog"],
+  "focus": {
+    "current": null,
+    "why": null,
+    "roadmap": []
+  },
+  "notion_sync": {
+    "enabled": false,
+    "database_id": null
+  }
+}

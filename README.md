@@ -1,10 +1,13 @@
-# Autopilot — ADHD Terminal Copilot for Claude Code
+# Autopilot — ADHD Terminal Copilot for Claude Code & Codex
 
 > Your brain doesn't hold context between sessions. Autopilot does.
 
 [![Version](https://img.shields.io/badge/version-2.0.0--beta1-blue)](https://github.com/maximgalson/autopilot-cc/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-compatible-purple)](https://claude.ai)
+[![Codex CLI](https://img.shields.io/badge/Codex_CLI-compatible-orange)](https://github.com/openai/codex)
+
+> **Codex users:** see [`codex/README.md`](codex/README.md) for the Codex CLI port (wrapper + MCP server + workflow plugin). Storage lives at `~/.codex/autopilot/`, independent from the CC edition.
 
 ---
 
